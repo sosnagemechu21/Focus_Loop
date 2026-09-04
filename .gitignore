@@ -7,3 +7,5 @@ env/
 .idea/
 .vscode/
 *.log
+staticfiles/
+.vercel/
