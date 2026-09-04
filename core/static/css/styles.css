@@ -1,0 +1,547 @@
+/* FocusLoop 2-Color Minimalist Brand Design System
+   Inspired by the Web2Gram / Earthy Clay Brand Aesthetic:
+   - Primary Base: Warm Natural Sand / Earthy Clay (#b8b1a5)
+   - Secondary / Accent: Solid Obsidian / Deep Charcoal Black (#141414)
+   - Card Tone: Refined Earthy Stone (#a7a094)
+   - Zero AI icons, zero neon glows, pure typography & clean pills.
+*/
+
+:root {
+  --brand-bg: #b8b1a5;
+  --brand-card: #a7a094;
+  --brand-card-hover: #9e978b;
+  --brand-pill: #938c80;
+  --brand-pill-light: #c2bbb0;
+  --brand-dark: #141414;
+  --brand-dark-subtle: #242424;
+  --brand-text: #141414;
+  --brand-text-muted: #383838;
+  --brand-border: rgba(20, 20, 20, 0.12);
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+
+  --radius-pill: 9999px;
+  --radius-card: 20px;
+  --radius-sm: 8px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--brand-bg);
+  color: var(--brand-text);
+  min-height: 100vh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ========================================================
+   TOP HEADER (Matching Web2Gram Screenshot)
+   ======================================================== */
+.brand-navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 64px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.brand-logo-text {
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--brand-dark);
+  text-decoration: none;
+}
+
+.brand-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+}
+
+.nav-link {
+  color: var(--brand-text);
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: opacity 0.2s ease;
+}
+
+.nav-link:hover {
+  opacity: 0.7;
+}
+
+.nav-link.active {
+  font-weight: 700;
+}
+
+.brand-nav-action {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Solid Black Pill Buttons (Signature Screenshot Element) */
+.pill-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 24px;
+  background-color: var(--brand-dark);
+  color: #ffffff;
+  border-radius: var(--radius-pill);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-sans);
+}
+
+.pill-btn:hover {
+  background-color: var(--brand-dark-subtle);
+  transform: translateY(-1px);
+}
+
+.pill-btn-outline {
+  background-color: transparent;
+  color: var(--brand-dark);
+  border: 1.5px solid var(--brand-dark);
+}
+
+.pill-btn-outline:hover {
+  background-color: var(--brand-dark);
+  color: #ffffff;
+}
+
+/* ========================================================
+   HERO / DAILY DIGEST SECTION (Matching Screenshot)
+   ======================================================== */
+.page-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px 64px 60px;
+}
+
+.digest-hero-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 36px;
+}
+
+.digest-title-group h1 {
+  font-size: 2.8rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: var(--brand-dark);
+  margin-bottom: 6px;
+}
+
+.digest-title-group p {
+  font-size: 1.05rem;
+  color: var(--brand-text-muted);
+  font-weight: 400;
+}
+
+.digest-action-pills {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.digest-action-pills .pill-btn {
+  padding: 10px 20px;
+  font-size: 0.85rem;
+}
+
+/* ========================================================
+   HORIZONTAL CARDS GRID (Exact Match to Screenshot)
+   ======================================================== */
+.digest-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
+@media (max-width: 1080px) {
+  .digest-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.digest-card {
+  background-color: var(--brand-card);
+  border-radius: var(--radius-card);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 250px;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+  position: relative;
+}
+
+.digest-card:hover {
+  background-color: var(--brand-card-hover);
+  transform: translateY(-2px);
+}
+
+.card-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.card-tag-pill {
+  display: inline-block;
+  background-color: var(--brand-pill);
+  color: var(--brand-dark);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+}
+
+.card-date-text {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--brand-text-muted);
+}
+
+.card-headline {
+  font-size: 1.28rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--brand-dark);
+  margin-bottom: 12px;
+  line-height: 1.35;
+}
+
+.card-body-text {
+  font-size: 0.95rem;
+  color: var(--brand-text-muted);
+  line-height: 1.55;
+  margin-bottom: 24px;
+}
+
+.card-footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 14px;
+  border-top: 1px solid rgba(20, 20, 20, 0.08);
+}
+
+.card-source-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--brand-dark);
+}
+
+.card-view-btn {
+  background: none;
+  border: none;
+  color: var(--brand-dark);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-sans);
+}
+
+.card-view-btn:hover {
+  text-decoration: underline;
+}
+
+/* ========================================================
+   LONG-FORM LIBRARY SECTION
+   ======================================================== */
+.section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.section-header-row h2 {
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--brand-dark);
+}
+
+.filter-pills-row {
+  display: flex;
+  gap: 8px;
+}
+
+.filter-pill {
+  padding: 6px 16px;
+  border-radius: var(--radius-pill);
+  background-color: var(--brand-pill);
+  color: var(--brand-dark);
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+}
+
+.filter-pill.active {
+  background-color: var(--brand-dark);
+  color: #ffffff;
+}
+
+/* Video Cards (Matching the brand card aesthetic) */
+.video-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
+@media (max-width: 1080px) {
+  .video-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.video-entry-card {
+  background-color: var(--brand-card);
+  border-radius: var(--radius-card);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.video-entry-card:hover {
+  background-color: var(--brand-card-hover);
+  transform: translateY(-2px);
+}
+
+/* ========================================================
+   TELEMETRY & BOUNDARY STATS BAR
+   ======================================================== */
+.boundary-stats-strip {
+  background-color: var(--brand-card);
+  border-radius: var(--radius-card);
+  padding: 28px 36px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
+@media (max-width: 900px) {
+  .boundary-stats-strip {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.stat-block h4 {
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--brand-text-muted);
+  margin-bottom: 6px;
+}
+
+.stat-block .stat-number {
+  font-size: 2.2rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: var(--brand-dark);
+}
+
+.stat-block p {
+  font-size: 0.82rem;
+  color: var(--brand-text-muted);
+}
+
+/* ========================================================
+   MODALS & VIEWERS (Minimalist 2-Color Design)
+   ======================================================== */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(20, 20, 20, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  padding: 20px;
+}
+
+.modal-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-sheet {
+  background-color: var(--brand-bg);
+  border: 2px solid var(--brand-dark);
+  border-radius: var(--radius-card);
+  width: 100%;
+  max-width: 680px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+}
+
+.modal-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 32px;
+  border-bottom: 1.5px solid var(--brand-dark);
+}
+
+.modal-header-row h3 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--brand-dark);
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--brand-dark);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.modal-content-body {
+  padding: 32px;
+  overflow-y: auto;
+}
+
+.modal-footer-row {
+  padding: 20px 32px;
+  border-top: 1.5px solid var(--brand-dark);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* Styled Minimalist Table */
+.minimal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+  margin-bottom: 24px;
+}
+
+.minimal-table th {
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 800;
+  border-bottom: 2px solid var(--brand-dark);
+  color: var(--brand-dark);
+}
+
+.minimal-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(20, 20, 20, 0.1);
+  color: var(--brand-dark);
+}
+
+.minimal-table .bold-val {
+  font-weight: 800;
+  font-family: var(--font-mono);
+}
+
+/* Video Player */
+.player-video-box {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background-color: var(--brand-dark);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.player-video-box iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* Toast */
+.brand-toast {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background-color: var(--brand-dark);
+  color: #ffffff;
+  border-radius: var(--radius-card);
+  padding: 18px 24px;
+  max-width: 400px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  z-index: 300;
+  transform: translateY(100px);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+.brand-toast.show {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.toast-copy strong {
+  display: block;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+
+.toast-copy p {
+  font-size: 0.85rem;
+  color: #d1d5db;
+}
+
+.toast-close-x {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 1.2rem;
+  cursor: pointer;
+}

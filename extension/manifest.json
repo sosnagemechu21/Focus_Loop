@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "FocusGuard: Intentional YouTube & Boundary Control",
+  "version": "1.0.0",
+  "description": "Enforces intentional YouTube breaks: full lock during focus, long-form only during breaks, Shorts blocked.",
+  "permissions": [
+    "storage",
+    "webNavigation"
+  ],
+  "host_permissions": [
+    "*://*.youtube.com/*",
+    "http://localhost:8000/*",
+    "http://127.0.0.1:8000/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.youtube.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "action": {
+    "default_title": "FocusGuard Active"
+  }
+}

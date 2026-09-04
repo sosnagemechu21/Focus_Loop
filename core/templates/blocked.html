@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Protected Session | {{ app }} Blocked</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/styles.css">
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: radial-gradient(circle at center, #111827 0%, #030712 100%);
+      margin: 0;
+      padding: 20px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .blocked-card {
+      background: rgba(17, 24, 39, 0.85);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      box-shadow: 0 25px 50px -12px rgba(239, 68, 68, 0.25);
+      border-radius: 24px;
+      padding: 40px;
+      max-width: 520px;
+      text-align: center;
+      backdrop-filter: blur(16px);
+      animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .lock-emblem {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 38px;
+      margin-bottom: 24px;
+    }
+    h1 {
+      font-size: 26px;
+      color: #f3f4f6;
+      margin-bottom: 12px;
+      font-weight: 800;
+    }
+    p {
+      color: #9ca3af;
+      font-size: 15px;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    .temptation-log-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      padding: 8px 16px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 28px;
+    }
+    .btn-return {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: #4f46e5;
+      color: #ffffff;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .btn-return:hover {
+      background: #4338ca;
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+  <div class="blocked-card">
+    <div class="lock-emblem">🔒</div>
+    <h1>{{ app }} is Locked</h1>
+    <div class="temptation-log-badge">
+      <span>⚡ Temptation Attempt Logged</span>
+    </div>
+    <p>
+      You are currently in an active <strong>Focus Session</strong>. Outside of scheduled intentional breaks, {{ app }} is completely unavailable.
+    </p>
+    <a href="/" class="btn-return">
+      Return to Focus Dashboard
+    </a>
+  </div>
+</body>
+</html>
