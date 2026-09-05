@@ -196,18 +196,35 @@
           </div>
         </div>
 
-        <!-- Curated Break Video List (Horizontal lines from sketch) -->
+        <!-- Curated Break Video List & Intentional Search -->
         <div class="break-video-feed-container">
+          <!-- Intentional Direct Search Bar (No Distraction Suggestions) -->
+          <div class="video-search-bar-wrap">
+            <div class="search-input-group">
+              <input type="text" id="video-search-input" class="brand-input" placeholder="🔍 Search any topic (e.g. Science, Space, History, Nature, Coding, Music...)" autocomplete="off">
+              <button id="btn-video-search" class="pill-btn pill-btn-sm" type="button">Search</button>
+              <button id="btn-video-clear-search" class="pill-btn pill-btn-sm pill-btn-outline" type="button" style="display: none;">Clear</button>
+            </div>
+            <div class="search-notice-text">Direct query matching • Zero algorithmic distraction suggestions</div>
+          </div>
+
+          <!-- Category and Saved Filter Pills -->
           <div class="feed-header-bar">
-            <span class="feed-label">Approved Long-Form Videos Feed</span>
+            <span class="feed-label" id="feed-results-count">Approved Long-Form Videos</span>
             <div class="feed-actions">
-              <button class="filter-pill active" id="filter-all">All Videos</button>
-              <button class="filter-pill" id="filter-saved">Saved</button>
+              <button class="filter-pill active" data-cat="All" id="filter-all">All</button>
+              <button class="filter-pill" data-cat="Science & Tech">Science</button>
+              <button class="filter-pill" data-cat="Nature">Nature</button>
+              <button class="filter-pill" data-cat="History">History</button>
+              <button class="filter-pill" data-cat="Engineering">Engineering</button>
+              <button class="filter-pill" data-cat="Music & Focus">Focus Music</button>
+              <button class="filter-pill saved-pill-badge" id="filter-saved">★ Saved Queue (<span id="saved-counter-badge">0</span>)</button>
               <button class="filter-pill" id="btn-surprise-pick">Surprise Pick</button>
             </div>
           </div>
 
-          <div class="video-rows-list" id="video-cards-grid">
+          <!-- Scrollable Video List -->
+          <div class="video-rows-list scrollable-video-feed" id="video-cards-grid">
             <!-- Populated with clean horizontal video rows -->
           </div>
         </div>

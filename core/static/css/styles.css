@@ -568,6 +568,79 @@ body {
   border-radius: 6px;
 }
 
+/* Intentional Direct Search Bar (No Suggestions) */
+.video-search-bar-wrap {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(20, 20, 20, 0.1);
+  background-color: rgba(20, 20, 20, 0.04);
+}
+
+.search-input-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.search-notice-text {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--brand-text-muted);
+  margin-top: 6px;
+}
+
+/* Scrollable Video Feed Container */
+.scrollable-video-feed {
+  max-height: 520px;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+.scrollable-video-feed::-webkit-scrollbar {
+  width: 7px;
+}
+
+.scrollable-video-feed::-webkit-scrollbar-track {
+  background: rgba(20, 20, 20, 0.06);
+}
+
+.scrollable-video-feed::-webkit-scrollbar-thumb {
+  background: var(--brand-dark);
+  border-radius: 9999px;
+}
+
+/* Save / Bookmark Button */
+.video-save-btn {
+  background: transparent;
+  border: 1.5px solid rgba(20, 20, 20, 0.25);
+  border-radius: var(--radius-pill);
+  padding: 5px 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--brand-dark);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+  font-family: var(--font-sans);
+}
+
+.video-save-btn:hover {
+  background-color: var(--brand-dark);
+  color: #ffffff;
+  border-color: var(--brand-dark);
+}
+
+.video-save-btn.saved {
+  background-color: var(--brand-dark);
+  color: #ffffff;
+  border-color: var(--brand-dark);
+}
+
+.saved-pill-badge {
+  font-weight: 800;
+}
+
 /* Inline Player Container */
 .inline-player-container {
   background-color: var(--brand-dark);

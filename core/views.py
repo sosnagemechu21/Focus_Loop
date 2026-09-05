@@ -381,16 +381,25 @@ def api_analytics(request):
 
 
 def api_videos(request):
-    """Curated long-form videos with categories, saved filtering, and surprise me"""
+    """Curated long-form videos with categories, search query, saved filtering, and surprise me"""
     category = request.GET.get('category')
     only_saved = request.GET.get('saved') == 'true'
     surprise = request.GET.get('surprise') == 'true'
+    q = request.GET.get('q', '').strip()
 
     videos = CuratedVideo.objects.all()
     if category and category != 'All':
-        videos = videos.filter(category=category)
+        videos = videos.filter(category__iexact=category)
     if only_saved:
         videos = videos.filter(is_saved=True)
+    if q:
+        from django.db.models import Q
+        videos = videos.filter(
+            Q(title__icontains=q) |
+            Q(description__icontains=q) |
+            Q(channel__icontains=q) |
+            Q(category__icontains=q)
+        )
 
     if surprise and videos.exists():
         video = random.choice(list(videos))
@@ -480,9 +489,6 @@ def api_seed_data(request):
 
 
 def _seed_curated_videos():
-    if CuratedVideo.objects.count() >= 6:
-        return
-
     curated = [
         {
             'title': 'How James Webb Space Telescope Unfolds The Universe',
@@ -512,20 +518,20 @@ def _seed_curated_videos():
             'duration_str': '19m',
             'duration_minutes': 19,
             'youtube_id': 'b1XGPv5x0Oo',
-            'category': 'Documentary',
+            'category': 'Nature',
             'description': 'How tree cover drastically reduces ambient temperatures, improves mental cognition, and heals urban environments.',
             'thumbnail_url': 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&auto=format&fit=crop&q=80',
             'is_saved': False
         },
         {
-            'title': 'The Art of Deep Focus: Cal Newport in Conversation',
-            'channel': 'Wisdom Project',
-            'duration_str': '45m',
-            'duration_minutes': 45,
-            'youtube_id': '3E7hkPZ-HTk',
-            'category': 'Philosophy',
-            'description': 'Why modern knowledge workers suffer cognitive fragmentation and the exact systems to reclaim sustained attention.',
-            'thumbnail_url': 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=600&auto=format&fit=crop&q=80',
+            'title': 'Lofi Hip Hop Radio: Beats to Relax/Study to',
+            'channel': 'Lofi Girl',
+            'duration_str': '180m',
+            'duration_minutes': 180,
+            'youtube_id': 'jfKfPfyJRdk',
+            'category': 'Music & Focus',
+            'description': 'Gentle chillhop melodies designed for sustained deep focus and relaxation during breaks.',
+            'thumbnail_url': 'https://images.unsplash.com/photo-1518791841217-8f162f1e1131?w=600&auto=format&fit=crop&q=80',
             'is_saved': True
         },
         {
@@ -534,7 +540,7 @@ def _seed_curated_videos():
             'duration_str': '22m',
             'duration_minutes': 22,
             'youtube_id': 'y7r2G73g2a8',
-            'category': 'Essays',
+            'category': 'Art & Essays',
             'description': 'A visual breakdown of chiaroscuro and how one rebellious painter changed visual storytelling forever.',
             'thumbnail_url': 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=600&auto=format&fit=crop&q=80',
             'is_saved': False
@@ -550,10 +556,142 @@ def _seed_curated_videos():
             'thumbnail_url': 'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=600&auto=format&fit=crop&q=80',
             'is_saved': False
         },
+        {
+            'title': 'Neural Networks from Scratch: The Essence of Deep Learning',
+            'channel': '3Blue1Brown',
+            'duration_str': '35m',
+            'duration_minutes': 35,
+            'youtube_id': 'aircAruvnKk',
+            'category': 'Coding & Math',
+            'description': 'A breathtaking visual journey uncovering what artificial intelligence really is under the hood.',
+            'thumbnail_url': 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600&auto=format&fit=crop&q=80',
+            'is_saved': False
+        },
+        {
+            'title': 'How Mechanical Watches Work Without Batteries',
+            'channel': 'Animagraffs',
+            'duration_str': '25m',
+            'duration_minutes': 25,
+            'youtube_id': 'p3Akn4rC-F8',
+            'category': 'Engineering',
+            'description': 'Microscopic balance wheels, mainsprings, and escapements working in harmony.',
+            'thumbnail_url': 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80',
+            'is_saved': False
+        },
+        {
+            'title': 'The Deep Ocean: Secrets of the Mariana Trench',
+            'channel': 'Ocean Documentaries',
+            'duration_str': '42m',
+            'duration_minutes': 42,
+            'youtube_id': 'W93XyXhGYQY',
+            'category': 'Nature',
+            'description': 'Descend 11,000 meters into pitch-black pressure to observe bizarre bioluminescent deep-sea organisms.',
+            'thumbnail_url': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&auto=format&fit=crop&q=80',
+            'is_saved': False
+        },
+        {
+            'title': 'How The Apollo Guidance Computer Worked in 1969',
+            'channel': 'Computer History Archives',
+            'duration_str': '38m',
+            'duration_minutes': 38,
+            'youtube_id': '1-xGerv5FOk',
+            'category': 'Science & Tech',
+            'description': 'How rope core memory and simple logic chips guided humanity safely to the lunar surface.',
+            'thumbnail_url': 'https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?w=600&auto=format&fit=crop&q=80',
+            'is_saved': False
+        },
+        {
+            'title': 'The Architecture of Antoni Gaudi: Sagrada Familia',
+            'channel': 'Design Chronicles',
+            'duration_str': '29m',
+            'duration_minutes': 29,
+            'youtube_id': 'z9bZkjdzGek',
+            'category': 'Art & Essays',
+            'description': 'How nature-inspired organic catenary arches transformed the skyline of Barcelona.',
+            'thumbnail_url': 'https://images.unsplash.com/photo-1583772654849-08288b93b554?w=600&auto=format&fit=crop&q=80',
+            'is_saved': False
+        },
+        {
+            'title': 'Why the Renaissance Happened Where and When It Did',
+            'channel': 'History Deep Dives',
+            'duration_str': '40m',
+            'duration_minutes': 40,
+            'youtube_id': 'L_LUpnjgPso',
+            'category': 'History',
+            'description': 'Commerce, Mediterranean trade routes, and rediscovery of ancient manuscripts that birthed modernity.',
+            'thumbnail_url': 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=600&auto=format&fit=crop&q=80',
+            'is_saved': False
+        },
+        {
+            'title': 'How Quantum Computers Break Classical Physics',
+            'channel': 'Kurzgesagt Focus',
+            'duration_str': '21m',
+            'duration_minutes': 21,
+            'youtube_id': 'v68zYya58qA',
+            'category': 'Science & Tech',
+            'description': 'Qubits, superposition, and entanglement explained simply with stunning animation.',
+            'thumbnail_url': 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=600&auto=format&fit=crop&q=80',
+            'is_saved': False
+        },
+        {
+            'title': 'Deep Work Ambient Soundscapes & White Noise',
+            'channel': 'Sound Therapy Studio',
+            'duration_str': '120m',
+            'duration_minutes': 120,
+            'youtube_id': 'M576WGiDBdQ',
+            'category': 'Music & Focus',
+            'description': 'Isochronic tones and soothing brown noise to quiet autopilot distraction loops.',
+            'thumbnail_url': 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80',
+            'is_saved': False
+        },
+        {
+            'title': 'How Jet Engines Produce 100,000 Pounds of Thrust',
+            'channel': 'Aviation Pioneers',
+            'duration_str': '27m',
+            'duration_minutes': 27,
+            'youtube_id': 'gXk1uK6n9Xg',
+            'category': 'Engineering',
+            'description': 'Turbofan thermodynamics, compression stages, and titanium turbine blades operating above melting points.',
+            'thumbnail_url': 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&auto=format&fit=crop&q=80',
+            'is_saved': False
+        },
+        {
+            'title': 'The Rise and Fall of the Roman Republic',
+            'channel': 'Classical Antiquity',
+            'duration_str': '48m',
+            'duration_minutes': 48,
+            'youtube_id': '2S_7o7l2gG4',
+            'category': 'History',
+            'description': 'From the Gracchi reforms to the Rubicon crossing: how institutional erosion broke a republic.',
+            'thumbnail_url': 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=600&auto=format&fit=crop&q=80',
+            'is_saved': False
+        },
+        {
+            'title': 'Synthwave Chill Radio: Retro 80s Cyberpunk Focus',
+            'channel': 'NightDrive Beats',
+            'duration_str': '90m',
+            'duration_minutes': 90,
+            'youtube_id': '4xDzrJKXOOY',
+            'category': 'Music & Focus',
+            'description': 'Analog synthesizers, arpeggiated basslines, and retro vibes for coding and creative work.',
+            'thumbnail_url': 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600&auto=format&fit=crop&q=80',
+            'is_saved': False
+        },
+        {
+            'title': 'The Secret Biological Language of Forests',
+            'channel': 'Ecology Horizon',
+            'duration_str': '33m',
+            'duration_minutes': 33,
+            'youtube_id': 'kYfNvmF0Bqw',
+            'category': 'Nature',
+            'description': 'Mycelial underground networks that share nutrients, warn neighboring trees of pests, and maintain equilibrium.',
+            'thumbnail_url': 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=600&auto=format&fit=crop&q=80',
+            'is_saved': False
+        }
     ]
 
     for item in curated:
-        CuratedVideo.objects.get_or_create(youtube_id=item['youtube_id'], defaults=item)
+        CuratedVideo.objects.update_or_create(youtube_id=item['youtube_id'], defaults=item)
 
 
 def _seed_mock_history():

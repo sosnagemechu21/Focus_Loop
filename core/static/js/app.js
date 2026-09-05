@@ -388,17 +388,60 @@ document.addEventListener('DOMContentLoaded', () => {
 
   btnCloseInlinePlayer?.addEventListener('click', closeInlinePlayer);
 
-  // Load Curated Videos
-  async function loadVideos(filter = 'all') {
+  // Search & Category Filters State
+  let currentSearchQuery = '';
+  let currentSelectedCategory = 'All';
+
+  const videoSearchInput = document.getElementById('video-search-input');
+  const btnVideoSearch = document.getElementById('btn-video-search');
+  const btnVideoClearSearch = document.getElementById('btn-video-clear-search');
+  const feedResultsCount = document.getElementById('feed-results-count');
+  const savedCounterBadge = document.getElementById('saved-counter-badge');
+  const categoryPills = document.querySelectorAll('.filter-pill[data-cat]');
+
+  // Load Curated Videos with Search Query and Category
+  async function loadVideos(category = 'All', query = '', onlySaved = false) {
     try {
-      let url = '/api/videos/';
-      if (filter === 'saved') url += '?saved=true';
+      let url = '/api/videos/?';
+      const params = [];
+      if (category && category !== 'All') params.push(`category=${encodeURIComponent(category)}`);
+      if (query) params.push(`q=${encodeURIComponent(query)}`);
+      if (onlySaved) params.push('saved=true');
+
+      url += params.join('&');
       const res = await fetch(url);
       const data = await res.json();
       state.videos = data.videos || [];
       renderVideos(state.videos);
+
+      // Update counter and header label
+      if (feedResultsCount) {
+        if (query) {
+          feedResultsCount.textContent = `Search results for "${query}" (${state.videos.length})`;
+        } else if (onlySaved) {
+          feedResultsCount.textContent = `Saved Queue (${state.videos.length} videos)`;
+        } else if (category && category !== 'All') {
+          feedResultsCount.textContent = `${category} Videos (${state.videos.length})`;
+        } else {
+          feedResultsCount.textContent = `Approved Long-Form Videos (${state.videos.length})`;
+        }
+      }
+
+      // Update saved counter
+      updateSavedCount();
     } catch (err) {
       console.debug('Failed to load videos:', err);
+    }
+  }
+
+  async function updateSavedCount() {
+    try {
+      const res = await fetch('/api/videos/?saved=true');
+      const data = await res.json();
+      const count = (data.videos || []).length;
+      if (savedCounterBadge) savedCounterBadge.textContent = count;
+    } catch (e) {
+      console.debug('Failed to update saved count:', e);
     }
   }
 
@@ -406,37 +449,123 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!videoCardsGrid) return;
     videoCardsGrid.innerHTML = '';
 
+    if (!videos.length) {
+      videoCardsGrid.innerHTML = `
+        <div style="padding: 36px 20px; text-align: center; color: var(--brand-text-muted);">
+          <strong style="display: block; font-size: 1rem; color: var(--brand-dark); margin-bottom: 6px;">No videos found</strong>
+          <span style="font-size: 0.85rem;">Try a different keyword or click "All" to browse the full library.</span>
+        </div>
+      `;
+      return;
+    }
+
     videos.forEach((v, idx) => {
       const row = document.createElement('div');
       row.className = 'video-row-item';
+      const isSaved = v.is_saved;
+
       row.innerHTML = `
         <div class="video-row-left">
           <div class="video-row-icon">${idx + 1}</div>
           <div class="video-row-content">
             <div class="video-row-title">${v.title}</div>
-            <div class="video-row-sub">${v.channel} • ${v.category}</div>
+            <div class="video-row-sub">${v.channel} • <span style="font-weight: 700; color: var(--brand-dark);">${v.category}</span></div>
           </div>
         </div>
         <div class="video-row-right">
           <span class="video-duration-tag">${v.duration}</span>
-          <button class="pill-btn pill-btn-sm" type="button">Watch ↗</button>
+          <button class="video-save-btn ${isSaved ? 'saved' : ''}" type="button" data-id="${v.id}" title="Save to queue">
+            ${isSaved ? '★ Saved' : '☆ Save'}
+          </button>
+          <button class="pill-btn pill-btn-sm btn-play-row" type="button">▶ Play</button>
         </div>
       `;
-      row.addEventListener('click', () => playVideoInline(v));
+
+      // Play video when clicked
+      row.querySelector('.btn-play-row')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        playVideoInline(v);
+      });
+
+      // Save / Bookmark video
+      row.querySelector('.video-save-btn')?.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const btn = e.currentTarget;
+        await toggleSaveVideo(v.id, btn);
+      });
+
       videoCardsGrid.appendChild(row);
     });
   }
 
-  filterAll?.addEventListener('click', () => {
-    filterAll.classList.add('active');
-    filterSaved.classList.remove('active');
-    loadVideos('all');
+  // Toggle Save Video API
+  async function toggleSaveVideo(videoId, btnEl) {
+    try {
+      const res = await fetch(`/api/videos/${videoId}/save/`, { method: 'POST' });
+      const data = await res.json();
+      if (data.status === 'ok') {
+        const isNowSaved = data.is_saved;
+        if (btnEl) {
+          if (isNowSaved) {
+            btnEl.classList.add('saved');
+            btnEl.textContent = '★ Saved';
+            showToast('Video Saved ★', 'Added to your Intentional Saved Queue.');
+          } else {
+            btnEl.classList.remove('saved');
+            btnEl.textContent = '☆ Save';
+            showToast('Video Removed', 'Removed from your Saved Queue.');
+          }
+        }
+        updateSavedCount();
+      }
+    } catch (err) {
+      console.error('Failed to toggle save video:', err);
+    }
+  }
+
+  // Search input and handlers (Direct search, NO distraction suggestions)
+  btnVideoSearch?.addEventListener('click', () => {
+    executeSearch();
   });
 
+  videoSearchInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      executeSearch();
+    }
+  });
+
+  function executeSearch() {
+    const q = videoSearchInput?.value.trim() || '';
+    currentSearchQuery = q;
+    if (btnVideoClearSearch) {
+      btnVideoClearSearch.style.display = q ? 'inline-flex' : 'none';
+    }
+    loadVideos(currentSelectedCategory, currentSearchQuery, false);
+  }
+
+  btnVideoClearSearch?.addEventListener('click', () => {
+    if (videoSearchInput) videoSearchInput.value = '';
+    currentSearchQuery = '';
+    if (btnVideoClearSearch) btnVideoClearSearch.style.display = 'none';
+    loadVideos(currentSelectedCategory, '', false);
+  });
+
+  // Category filter pills
+  categoryPills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      currentSelectedCategory = pill.getAttribute('data-cat') || 'All';
+      loadVideos(currentSelectedCategory, currentSearchQuery, false);
+    });
+  });
+
+  // Saved Queue filter
   filterSaved?.addEventListener('click', () => {
+    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
     filterSaved.classList.add('active');
-    filterAll.classList.remove('active');
-    loadVideos('saved');
+    loadVideos('All', currentSearchQuery, true);
   });
 
   btnSurprisePick?.addEventListener('click', async () => {
