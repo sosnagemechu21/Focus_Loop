@@ -1,275 +1,392 @@
-// FocusLoop Minimalist 2-Color Brand Application Engine
+// FocusLoop: Progressive Sequential Flow Engine
+// Stage 1: Connect Account -> Stage 2: Choose Break Time -> Stage 3: YouTube (No Shorts) -> Stage 4: Ask Study Hours -> Stage 5: App Closed & Locked
 
 document.addEventListener('DOMContentLoaded', () => {
   const state = {
-    mode: 'FOCUS', // 'FOCUS' | 'BREAK'
-    remainingSeconds: 3000,
+    currentStage: 1, // 1: connect, 2: choose_break, 3: youtube_break, 4: ask_study, 5: app_locked
+    isConnected: false,
+    connectedEmail: '',
+    breakDurationMinutes: 15,
+    studyDurationHours: 2,
+    studyTask: 'Deep Study Session',
+    remainingSeconds: 0,
     elapsedSeconds: 0,
-    plannedDurationMinutes: 50,
-    taskName: 'Study / Deep Work Block',
-    nextBreakTime: '12:30 PM',
     timerInterval: null,
     videos: [],
-    currentFilter: 'all'
+    activeVideo: null
   };
 
-  // DOM References
-  const headerStatusBtn = document.getElementById('header-status-btn');
-  const btnHeroBreak = document.getElementById('btn-hero-break');
-  const btnHeroSimulate = document.getElementById('btn-hero-simulate');
-  const btnHeroTotal = document.getElementById('btn-hero-total');
+  // Web Audio Synthesizer
+  const audioCtx = (typeof window.AudioContext !== 'undefined' || typeof window.webkitAudioContext !== 'undefined')
+    ? new (window.AudioContext || window.webkitAudioContext)()
+    : null;
 
-  const cardFocusTag = document.getElementById('card-focus-tag');
-  const cardFocusRemaining = document.getElementById('card-focus-remaining');
-  const cardFocusHeadline = document.getElementById('card-focus-headline');
-  const cardFocusBody = document.getElementById('card-focus-body');
-  const cardBreakTag = document.getElementById('card-break-tag');
-  const cardBreakTimerText = document.getElementById('card-break-timer-text');
-  const cardAnalyticsAttempts = document.getElementById('card-analytics-attempts');
+  function playTone(freq, type = 'sine', duration = 0.3, delay = 0) {
+    if (!audioCtx) return;
+    try {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      setTimeout(() => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      }, delay * 1000);
+    } catch (e) {
+      console.debug('Audio error:', e);
+    }
+  }
 
-  // Stats Strip
-  const numYtFocus = document.getElementById('num-yt-focus');
-  const numShortsBlocked = document.getElementById('num-shorts-blocked');
-  const numBreaksCompleted = document.getElementById('num-breaks-completed');
-  const numAvgBreak = document.getElementById('num-avg-break');
+  function playChimeStart() {
+    playTone(523.25, 'sine', 0.2, 0);       // C5
+    playTone(659.25, 'sine', 0.25, 0.12);   // E5
+    playTone(783.99, 'sine', 0.4, 0.24);    // G5
+  }
 
-  // Video Grid & Filters
+  function playAlertBreakEnd() {
+    playTone(880, 'triangle', 0.2, 0);
+    playTone(784, 'triangle', 0.2, 0.15);
+    playTone(659, 'triangle', 0.4, 0.3);
+  }
+
+  function playWarningBuzzer() {
+    playTone(220, 'sawtooth', 0.15, 0);
+    playTone(196, 'sawtooth', 0.25, 0.12);
+  }
+
+  // Toast
+  const brandToast = document.getElementById('brand-toast');
+  function showToast(heading, text, isWarning = false) {
+    const toastHeading = document.getElementById('toast-heading');
+    const toastText = document.getElementById('toast-text');
+    if (toastHeading) toastHeading.textContent = heading;
+    if (toastText) toastText.textContent = text;
+    if (brandToast) {
+      brandToast.style.borderColor = isWarning ? '#ef4444' : 'var(--brand-dark)';
+      brandToast.classList.add('show');
+      setTimeout(() => brandToast.classList.remove('show'), 4200);
+    }
+  }
+
+  document.getElementById('btn-toast-close')?.addEventListener('click', () => {
+    brandToast?.classList.remove('show');
+  });
+
+  // Time formatters
+  function formatClock(totalSec) {
+    if (totalSec <= 0) return '00:00';
+    const mins = Math.floor(totalSec / 60);
+    const secs = Math.floor(totalSec % 60);
+    const mm = mins < 10 ? '0' + mins : mins;
+    const ss = secs < 10 ? '0' + secs : secs;
+    return `${mm}:${ss}`;
+  }
+
+  function formatHoursClock(totalSec) {
+    if (totalSec <= 0) return '00:00:00';
+    const hours = Math.floor(totalSec / 3600);
+    const mins = Math.floor((totalSec % 3600) / 60);
+    const secs = Math.floor(totalSec % 60);
+    const hh = hours < 10 ? '0' + hours : hours;
+    const mm = mins < 10 ? '0' + mins : mins;
+    const ss = secs < 10 ? '0' + secs : secs;
+    return `${hh}:${mm}:${ss}`;
+  }
+
+  // ========================================================
+  // Progressive Stage Controller
+  // ========================================================
+  const stages = {
+    1: document.getElementById('stage-connect'),
+    2: document.getElementById('stage-choose-break'),
+    3: document.getElementById('stage-youtube-break'),
+    4: document.getElementById('stage-ask-study'),
+    5: document.getElementById('stage-app-locked')
+  };
+
+  const stageBadges = {
+    1: document.getElementById('badge-step-1'),
+    2: document.getElementById('badge-step-2'),
+    3: document.getElementById('badge-step-3'),
+    4: document.getElementById('badge-step-4')
+  };
+
+  function goToStage(num) {
+    state.currentStage = num;
+
+    // Hide all stages
+    Object.values(stages).forEach(stageEl => {
+      if (stageEl) stageEl.style.display = 'none';
+    });
+
+    // Show target stage
+    if (stages[num]) {
+      stages[num].style.display = 'block';
+      stages[num].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // Update Header Stepper Badges
+    Object.keys(stageBadges).forEach(k => {
+      const idx = parseInt(k, 10);
+      const b = stageBadges[idx];
+      if (!b) return;
+
+      b.classList.remove('active', 'completed');
+      if (idx === num || (num === 5 && idx === 4)) {
+        b.classList.add('active');
+      } else if (idx < num) {
+        b.classList.add('completed');
+      }
+    });
+
+    // Header Action Button Text
+    const headerStatusBtn = document.getElementById('header-status-btn');
+    if (headerStatusBtn) {
+      if (num === 1) headerStatusBtn.textContent = '1. Connect 🔑';
+      else if (num === 2) headerStatusBtn.textContent = '2. Choose Break 🌿';
+      else if (num === 3) headerStatusBtn.textContent = '3. Break Active 🌿';
+      else if (num === 4) headerStatusBtn.textContent = '4. Set Study 🔒';
+      else if (num === 5) headerStatusBtn.textContent = 'Study Locked 🔒';
+    }
+  }
+
+  // ========================================================
+  // STAGE 1: Connect Account
+  // ========================================================
+  const accountUnconnectedBox = document.getElementById('account-unconnected-box');
+  const accountConnectedBox = document.getElementById('account-connected-box');
+  const accountNameText = document.getElementById('account-name-text');
+  const accountAvatarChar = document.getElementById('account-avatar-char');
+  const btnOpenConnectModal = document.getElementById('btn-open-connect-modal');
+  const btnProceedToBreak = document.getElementById('btn-proceed-to-break');
+  const modalConnectAccount = document.getElementById('modal-connect-account');
+  const btnCloseConnectModal = document.getElementById('btn-close-connect-modal');
+  const btnConfirmConnect = document.getElementById('btn-confirm-connect');
+  const connectEmailInput = document.getElementById('connect-email-input');
+  const btnPresetEmail1 = document.getElementById('btn-preset-email-1');
+  const btnPresetEmail2 = document.getElementById('btn-preset-email-2');
+
+  btnOpenConnectModal?.addEventListener('click', () => {
+    modalConnectAccount?.classList.add('open');
+  });
+
+  btnCloseConnectModal?.addEventListener('click', () => {
+    modalConnectAccount?.classList.remove('open');
+  });
+
+  btnPresetEmail1?.addEventListener('click', () => {
+    connectEmailInput.value = 'student@gmail.com';
+  });
+
+  btnPresetEmail2?.addEventListener('click', () => {
+    connectEmailInput.value = 'focus.engineer@gmail.com';
+  });
+
+  btnConfirmConnect?.addEventListener('click', async () => {
+    const email = connectEmailInput.value.trim() || 'student@gmail.com';
+    state.isConnected = true;
+    state.connectedEmail = email;
+    localStorage.setItem('fl_connected_email', email);
+
+    accountUnconnectedBox.style.display = 'none';
+    accountConnectedBox.style.display = 'flex';
+    accountNameText.textContent = `Google Account: ${email}`;
+    accountAvatarChar.textContent = email.charAt(0).toUpperCase();
+
+    modalConnectAccount?.classList.remove('open');
+    playTone(587.33, 'sine', 0.2);
+    showToast('Account Connected ✓', `Linked with ${email}. Proceeding to choose break time.`);
+
+    // Automatically transition to Stage 2
+    setTimeout(() => goToStage(2), 600);
+  });
+
+  btnProceedToBreak?.addEventListener('click', () => {
+    goToStage(2);
+  });
+
+  // Check existing connection
+  const savedEmail = localStorage.getItem('fl_connected_email');
+  if (savedEmail) {
+    state.isConnected = true;
+    state.connectedEmail = savedEmail;
+    accountUnconnectedBox.style.display = 'none';
+    accountConnectedBox.style.display = 'flex';
+    accountNameText.textContent = `Google Account: ${savedEmail}`;
+    accountAvatarChar.textContent = savedEmail.charAt(0).toUpperCase();
+  }
+
+  // ========================================================
+  // STAGE 2: Choose Break Time
+  // ========================================================
+  const breakChoicePills = document.querySelectorAll('.break-choice-pill');
+  const inputCustomBreak = document.getElementById('input-custom-break');
+  const btnLaunchYoutubeBreak = document.getElementById('btn-launch-youtube-break');
+
+  breakChoicePills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      breakChoicePills.forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      const mins = parseInt(pill.getAttribute('data-minutes'), 10) || 15;
+      state.breakDurationMinutes = mins;
+      if (inputCustomBreak) inputCustomBreak.value = mins;
+    });
+  });
+
+  inputCustomBreak?.addEventListener('input', (e) => {
+    const val = parseInt(e.target.value, 10);
+    if (val && val > 0) {
+      state.breakDurationMinutes = val;
+      breakChoicePills.forEach(p => {
+        if (parseInt(p.getAttribute('data-minutes'), 10) === val) {
+          p.classList.add('active');
+        } else {
+          p.classList.remove('active');
+        }
+      });
+    }
+  });
+
+  btnLaunchYoutubeBreak?.addEventListener('click', async () => {
+    const mins = state.breakDurationMinutes || 15;
+
+    try {
+      await fetch('/api/break/start/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ duration_minutes: mins })
+      });
+
+      state.remainingSeconds = mins * 60;
+      playChimeStart();
+      showToast('YouTube Break Unlocked 🌿', `${mins} min break started. Shorts are quarantined!`);
+      refreshAnalytics();
+
+      // Launch Stage 3 (Directly YouTube Page)
+      goToStage(3);
+    } catch (err) {
+      console.error('Failed to start break:', err);
+    }
+  });
+
+  // ========================================================
+  // STAGE 3: Directly YouTube Page (Strictly No Shorts)
+  // ========================================================
+  const breakLiveClock = document.getElementById('break-live-clock');
+  const btnFinishBreakNow = document.getElementById('btn-finish-break-now');
+  const customVideoUrl = document.getElementById('custom-video-url');
+  const btnSubmitCustomVideo = document.getElementById('btn-submit-custom-video');
+  const btnTestShortsIntercept = document.getElementById('btn-test-shorts-intercept');
+  const inlinePlayerContainer = document.getElementById('inline-player-container');
+  const inlinePlayerIframe = document.getElementById('inline-player-iframe');
+  const inlinePlayerTitle = document.getElementById('inline-player-title');
+  const btnCloseInlinePlayer = document.getElementById('btn-close-inline-player');
   const videoCardsGrid = document.getElementById('video-cards-grid');
   const filterAll = document.getElementById('filter-all');
   const filterSaved = document.getElementById('filter-saved');
   const btnSurprisePick = document.getElementById('btn-surprise-pick');
 
-  // Modals
-  const modalAnalytics = document.getElementById('modal-analytics');
-  const modalSettings = document.getElementById('modal-settings');
-  const modalVideoPlayer = document.getElementById('modal-video-player');
-  const brandToast = document.getElementById('brand-toast');
-
-  // Toast Function
-  function showToast(heading, text) {
-    const toastHeading = document.getElementById('toast-heading');
-    const toastText = document.getElementById('toast-text');
-    toastHeading.textContent = heading;
-    toastText.textContent = text;
-    brandToast.classList.add('show');
-    setTimeout(() => {
-      brandToast.classList.remove('show');
-    }, 4500);
-  }
-
-  document.getElementById('btn-toast-close')?.addEventListener('click', () => {
-    brandToast.classList.remove('show');
+  btnFinishBreakNow?.addEventListener('click', () => {
+    finishBreakAndAskStudy();
   });
 
-  // Time Formatter
-  function formatRemaining(totalSec) {
-    if (totalSec <= 0) return '00:00';
-    const hours = Math.floor(totalSec / 3600);
-    const mins = Math.floor((totalSec % 3600) / 60);
-    const secs = Math.floor(totalSec % 60);
-    if (hours > 0) return `${hours}h ${mins}m remaining`;
-    const mm = mins < 10 ? '0' + mins : mins;
-    const ss = secs < 10 ? '0' + secs : secs;
-    return `${mm}:${ss} remaining`;
+  function finishBreakAndAskStudy() {
+    closeInlinePlayer();
+    playAlertBreakEnd();
+    showToast('Break Completed 🔔', 'Time to choose your study hours and lock YouTube.');
+    goToStage(4);
   }
 
-  // Fetch Status from Django API
-  async function fetchStatus() {
+  // Real Shorts Interceptor
+  btnSubmitCustomVideo?.addEventListener('click', async () => {
+    const url = customVideoUrl.value.trim();
+    if (!url) {
+      showToast('Input Required', 'Please paste a YouTube video URL.', true);
+      return;
+    }
+
     try {
-      const res = await fetch('/api/status/');
-      if (!res.ok) return;
+      const res = await fetch('/api/validate-video/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: url })
+      });
       const data = await res.json();
 
-      state.mode = data.mode;
-      state.remainingSeconds = data.remaining_seconds;
-      state.elapsedSeconds = data.elapsed_seconds;
-      state.plannedDurationMinutes = data.planned_duration_minutes;
-      state.taskName = data.task_name;
-      state.nextBreakTime = data.next_break_time;
-
-      updateStatusUI();
-    } catch (err) {
-      console.debug('Failed to fetch status:', err);
-    }
-  }
-
-  function updateStatusUI() {
-    if (state.mode === 'FOCUS') {
-      headerStatusBtn.textContent = 'Focus Locked 🔒';
-      headerStatusBtn.className = 'pill-btn';
-      btnHeroBreak.textContent = 'Start Break';
-
-      if (cardFocusTag) cardFocusTag.textContent = 'SESSION FOCUS';
-      if (cardFocusRemaining) cardFocusRemaining.textContent = formatRemaining(state.remainingSeconds);
-      if (cardFocusHeadline) cardFocusHeadline.textContent = state.taskName;
-      if (cardFocusBody) {
-        cardFocusBody.textContent = 'Outside scheduled breaks, YouTube is strictly locked. Every impulse to open distraction apps is shielded at the boundary.';
+      if (data.status === 'blocked') {
+        playWarningBuzzer();
+        showToast('❌ Shorts Quarantined!', data.message, true);
+        refreshAnalytics();
+        return;
       }
-      if (cardBreakTimerText) cardBreakTimerText.textContent = '20 min allowance';
-    } else {
-      headerStatusBtn.textContent = 'Break Active 🌿';
-      headerStatusBtn.className = 'pill-btn pill-btn-outline';
-      btnHeroBreak.textContent = 'Finish Break 🔒';
 
-      if (cardFocusTag) cardFocusTag.textContent = 'FOCUS PAUSED';
-      if (cardFocusRemaining) cardFocusRemaining.textContent = 'Break in progress';
-      if (cardBreakTimerText) cardBreakTimerText.textContent = formatRemaining(state.remainingSeconds);
-    }
-  }
-
-  // Live Timer Ticker
-  function startTicker() {
-    if (state.timerInterval) clearInterval(state.timerInterval);
-    state.timerInterval = setInterval(() => {
-      if (state.remainingSeconds > 0) {
-        state.remainingSeconds--;
-        state.elapsedSeconds++;
-
-        if (state.mode === 'FOCUS') {
-          if (cardFocusRemaining) cardFocusRemaining.textContent = formatRemaining(state.remainingSeconds);
-        } else {
-          if (cardBreakTimerText) cardBreakTimerText.textContent = formatRemaining(state.remainingSeconds);
-          if (state.remainingSeconds <= 0) {
-            endBreakSession();
-          }
-        }
+      if (data.status === 'ok') {
+        playVideoInline({
+          title: data.title,
+          channel: 'Custom URL',
+          youtube_id: data.video_id
+        });
+        showToast('Long-Form Loaded 🌿', 'Playing distraction-free. Shorts stripped.');
+      } else {
+        showToast('Invalid URL', data.message || 'Please check the link.', true);
       }
-    }, 1000);
-  }
-
-  // Start Break API
-  async function startBreakSession(durationMins = 20) {
-    try {
-      const res = await fetch('/api/break/start/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ duration_minutes: durationMins })
-      });
-      const data = await res.json();
-      state.mode = 'BREAK';
-      state.remainingSeconds = durationMins * 60;
-      updateStatusUI();
-      showToast('Break Started 🌿', `YouTube is unlocked for ${durationMins}m (Long-form only. Shorts blocked).`);
-      refreshAnalytics();
     } catch (err) {
-      console.error('Failed to start break:', err);
-    }
-  }
-
-  // End Break API
-  async function endBreakSession() {
-    try {
-      const res = await fetch('/api/break/end/', { method: 'POST' });
-      const data = await res.json();
-      state.mode = 'FOCUS';
-      updateStatusUI();
-      showToast('Break Complete 🔒', 'YouTube is locked until your next break. Back to focus.');
-      refreshAnalytics();
-    } catch (err) {
-      console.error('Failed to end break:', err);
-    }
-  }
-
-  // Toggle Break / Focus from Hero Button
-  btnHeroBreak?.addEventListener('click', () => {
-    if (state.mode === 'FOCUS') {
-      startBreakSession(20);
-    } else {
-      endBreakSession();
+      console.error('Validation error:', err);
     }
   });
 
-  headerStatusBtn?.addEventListener('click', () => {
-    if (state.mode === 'FOCUS') {
-      startBreakSession(20);
-    } else {
-      endBreakSession();
-    }
-  });
-
-  // Hero Simulate Button: Tests Boundary Defense
-  btnHeroSimulate?.addEventListener('click', async () => {
-    if (state.mode === 'FOCUS') {
-      await fetch('/api/events/log/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          event_type: 'YOUTUBE_ATTEMPT_FOCUS',
-          app_name: 'YouTube',
-          target_url: 'https://youtube.com',
-          note: 'Blocked impulse to open YouTube while in focus mode.'
-        })
-      });
-      showToast('Boundary Defended 🔒', 'YouTube launch intercepted! Temptation metric logged. Attention protected.');
-    } else {
-      await fetch('/api/events/log/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          event_type: 'SHORTS_BLOCKED_BREAK',
-          app_name: 'YouTube',
-          target_url: 'https://youtube.com/shorts',
-          note: 'Shorts blocked during intentional break.'
-        })
-      });
-      showToast('Shorts Intercepted ❌', 'Shorts blocked! Autopilot scrolling quarantined. Enjoy deep long-form.');
-    }
-    refreshAnalytics();
-  });
-
-  // Hero Total Shorts Button
-  btnHeroTotal?.addEventListener('click', async () => {
-    await fetch('/api/events/log/', {
+  btnTestShortsIntercept?.addEventListener('click', async () => {
+    playWarningBuzzer();
+    await fetch('/api/validate-video/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        event_type: 'SHORTS_BLOCKED_BREAK',
-        app_name: 'YouTube',
-        target_url: 'https://youtube.com/shorts',
-        note: 'Shorts blocked during intentional break.'
-      })
+      body: JSON.stringify({ url: 'https://www.youtube.com/shorts/3t78j6x0w3A' })
     });
-    showToast('Shorts Blocked ❌', 'Dopamine loop prevented. Counter incremented.');
+    showToast(
+      '❌ Shorts Intercepted & Quarantined!',
+      'Shorts loop blocked. Only intentional long-form videos are allowed during breaks.',
+      true
+    );
     refreshAnalytics();
   });
 
-  // Analytics Telemetry
-  async function refreshAnalytics() {
-    try {
-      const res = await fetch('/api/analytics/');
-      const data = await res.json();
-      const m = data.metrics_table;
+  function playVideoInline(video) {
+    state.activeVideo = video;
+    if (inlinePlayerContainer && inlinePlayerIframe) {
+      inlinePlayerTitle.textContent = `Now Playing: ${video.title} (${video.channel || 'YouTube'})`;
+      
+      const externalLink = document.getElementById('btn-player-external-link');
+      if (externalLink) {
+        externalLink.href = `https://www.youtube.com/watch?v=${video.youtube_id}`;
+        externalLink.style.display = 'inline-flex';
+      }
 
-      if (numYtFocus) numYtFocus.textContent = m.youtube_attempts_during_focus;
-      if (numShortsBlocked) numShortsBlocked.textContent = m.shorts_blocked;
-      if (btnHeroTotal) btnHeroTotal.textContent = `${m.shorts_blocked} Shorts Blocked`;
-      if (numBreaksCompleted) numBreaksCompleted.textContent = `${m.breaks_completed} / ${m.breaks_started}`;
-      if (numAvgBreak) numAvgBreak.textContent = m.avg_break;
-      if (cardAnalyticsAttempts) cardAnalyticsAttempts.textContent = `${m.youtube_attempts_during_focus} Temptations`;
-
-      // Modal Table
-      document.getElementById('tb-breaks-started').textContent = m.breaks_started;
-      document.getElementById('tb-breaks-completed').textContent = m.breaks_completed;
-      document.getElementById('tb-shorts-blocked').textContent = m.shorts_blocked;
-      document.getElementById('tb-long-videos').textContent = m.long_videos_watched;
-      document.getElementById('tb-avg-break').textContent = m.avg_break;
-      document.getElementById('tb-avg-planned').textContent = m.avg_planned_break;
-      document.getElementById('tb-overruns').textContent = m.break_overruns;
-      document.getElementById('tb-yt-focus').textContent = m.youtube_attempts_during_focus;
-      document.getElementById('tb-focus-completed').textContent = m.focus_sessions_completed;
-
-      // Insight
-      const headline = document.getElementById('insight-headline');
-      const detail = document.getElementById('insight-detail');
-      const temptation = document.getElementById('insight-temptation');
-      if (headline) headline.textContent = data.narrative.headline;
-      if (detail) detail.textContent = data.narrative.detail;
-      if (temptation) temptation.textContent = data.narrative.temptation_insight;
-
-    } catch (err) {
-      console.debug('Failed to refresh analytics:', err);
+      inlinePlayerIframe.innerHTML = `
+        <iframe 
+          src="https://www.youtube.com/embed/${video.youtube_id}?rel=0&enablejsapi=1" 
+          title="${video.title}" 
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+          referrerpolicy="strict-origin-when-cross-origin"
+          allowfullscreen>
+        </iframe>
+      `;
+      inlinePlayerContainer.style.display = 'block';
+      inlinePlayerContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   }
+
+  function closeInlinePlayer() {
+    if (inlinePlayerContainer) inlinePlayerContainer.style.display = 'none';
+    if (inlinePlayerIframe) inlinePlayerIframe.innerHTML = '';
+    state.activeVideo = null;
+  }
+
+  btnCloseInlinePlayer?.addEventListener('click', closeInlinePlayer);
 
   // Load Curated Videos
   async function loadVideos(filter = 'all') {
@@ -289,74 +406,27 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!videoCardsGrid) return;
     videoCardsGrid.innerHTML = '';
 
-    videos.forEach(v => {
-      const card = document.createElement('article');
-      card.className = 'video-entry-card';
-      card.innerHTML = `
-        <div>
-          <div class="card-top-row">
-            <span class="card-tag-pill">${v.category}</span>
-            <span class="card-date-text">${v.duration}</span>
+    videos.forEach((v, idx) => {
+      const row = document.createElement('div');
+      row.className = 'video-row-item';
+      row.innerHTML = `
+        <div class="video-row-left">
+          <div class="video-row-icon">${idx + 1}</div>
+          <div class="video-row-content">
+            <div class="video-row-title">${v.title}</div>
+            <div class="video-row-sub">${v.channel} • ${v.category}</div>
           </div>
-          <h3 class="card-headline" style="font-size: 1.15rem; margin-bottom: 8px;">${v.title}</h3>
-          <p class="card-body-text" style="font-size: 0.88rem; margin-bottom: 18px;">${v.description || 'High-value long-form deep dive.'}</p>
         </div>
-        <div class="card-footer-row">
-          <div class="card-source-info">${v.channel}</div>
-          <button class="card-view-btn">Play &#8599;</button>
+        <div class="video-row-right">
+          <span class="video-duration-tag">${v.duration}</span>
+          <button class="pill-btn pill-btn-sm" type="button">Watch ↗</button>
         </div>
       `;
-      card.addEventListener('click', () => openVideoPlayer(v));
-      videoCardsGrid.appendChild(card);
+      row.addEventListener('click', () => playVideoInline(v));
+      videoCardsGrid.appendChild(row);
     });
   }
 
-  // Open Video Player Modal
-  function openVideoPlayer(video) {
-    const titleEl = document.getElementById('player-title');
-    const iframeBox = document.getElementById('player-iframe-box');
-    if (titleEl) titleEl.textContent = video.title;
-
-    if (iframeBox) {
-      iframeBox.innerHTML = `
-        <iframe 
-          src="https://www.youtube-nocookie.com/embed/${video.youtube_id}?autoplay=1&rel=0" 
-          title="${video.title}" 
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-          allowfullscreen>
-        </iframe>
-      `;
-    }
-
-    modalVideoPlayer?.classList.add('open');
-
-    fetch('/api/events/log/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        event_type: 'LONG_VIDEO_WATCHED',
-        app_name: 'YouTube',
-        target_url: `https://youtube.com/watch?v=${video.youtube_id}`,
-        note: `Intentional break viewing: "${video.title}"`,
-        video_id: video.youtube_id
-      })
-    }).then(() => refreshAnalytics());
-  }
-
-  document.getElementById('btn-close-player')?.addEventListener('click', () => {
-    modalVideoPlayer?.classList.remove('open');
-    const iframeBox = document.getElementById('player-iframe-box');
-    if (iframeBox) iframeBox.innerHTML = '';
-  });
-
-  document.getElementById('btn-player-finish-break')?.addEventListener('click', () => {
-    modalVideoPlayer?.classList.remove('open');
-    const iframeBox = document.getElementById('player-iframe-box');
-    if (iframeBox) iframeBox.innerHTML = '';
-    endBreakSession();
-  });
-
-  // Filter Buttons
   filterAll?.addEventListener('click', () => {
     filterAll.classList.add('active');
     filterSaved.classList.remove('active');
@@ -374,7 +444,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch('/api/videos/?surprise=true');
       const data = await res.json();
       if (data.video) {
-        openVideoPlayer(data.video);
+        playVideoInline(data.video);
         showToast('Surprise Selected', `Loading: "${data.video.title}"`);
       }
     } catch (e) {
@@ -382,86 +452,194 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Card View Buttons
-  document.getElementById('btn-view-focus-details')?.addEventListener('click', () => {
-    showToast('Focus Boundary', 'Focus session active. YouTube locked until break.');
+  // ========================================================
+  // STAGE 4: Ask Study Hours
+  // ========================================================
+  const hourChoicePills = document.querySelectorAll('.hour-choice-pill');
+  const studyCustomHours = document.getElementById('study-custom-hours');
+  const studyTaskInput = document.getElementById('study-task-input');
+  const btnLockAndClose = document.getElementById('btn-lock-and-close');
+
+  hourChoicePills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      hourChoicePills.forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      const hrs = parseFloat(pill.getAttribute('data-hours')) || 2;
+      state.studyDurationHours = hrs;
+      if (studyCustomHours) studyCustomHours.value = hrs;
+    });
   });
 
-  document.getElementById('btn-view-break-library')?.addEventListener('click', () => {
-    document.querySelector('.longform-library-section')?.scrollIntoView({ behavior: 'smooth' });
-  });
-
-  document.getElementById('btn-view-analytics-modal')?.addEventListener('click', () => {
-    refreshAnalytics();
-    modalAnalytics?.classList.add('open');
-  });
-
-  document.getElementById('btn-close-analytics')?.addEventListener('click', () => {
-    modalAnalytics?.classList.remove('open');
-  });
-  document.getElementById('btn-done-analytics')?.addEventListener('click', () => {
-    modalAnalytics?.classList.remove('open');
-  });
-
-  // Settings Modal
-  async function loadSettings() {
-    try {
-      const res = await fetch('/api/settings/');
-      const data = await res.json();
-      const list = document.getElementById('settings-apps-list');
-      if (!list) return;
-      list.innerHTML = '';
-
-      data.apps.forEach(app => {
-        const row = document.createElement('div');
-        row.style.cssText = 'display: flex; justify-content: space-between; align-items: center; background-color: var(--brand-card); padding: 12px 16px; border-radius: 10px;';
-        row.innerHTML = `
-          <div>
-            <strong style="font-size: 0.95rem;">${app.name}</strong>
-            <div style="font-size: 0.8rem; color: var(--brand-text-muted);">${app.special_rule}</div>
-          </div>
-          <input type="checkbox" ${app.is_enabled ? 'checked' : ''} data-app="${app.name}" style="width: 20px; height: 20px; accent-color: var(--brand-dark); cursor: pointer;">
-        `;
-        list.appendChild(row);
+  studyCustomHours?.addEventListener('input', (e) => {
+    const val = parseFloat(e.target.value);
+    if (val && val > 0) {
+      state.studyDurationHours = val;
+      hourChoicePills.forEach(p => {
+        if (parseFloat(p.getAttribute('data-hours')) === val) {
+          p.classList.add('active');
+        } else {
+          p.classList.remove('active');
+        }
       });
+    }
+  });
+
+  btnLockAndClose?.addEventListener('click', async () => {
+    const hours = state.studyDurationHours || 2;
+    const task = studyTaskInput?.value.trim() || 'Study Session';
+    const durationMinutes = Math.round(hours * 60);
+
+    state.studyTask = task;
+    state.remainingSeconds = durationMinutes * 60;
+
+    try {
+      await fetch('/api/focus/start/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          duration_minutes: durationMinutes,
+          task_name: task
+        })
+      });
+
+      playTone(440, 'triangle', 0.4);
+      showToast('YouTube Locked 🔒', `Locked for ${hours} hours. Go focus on "${task}"!`);
+      refreshAnalytics();
+
+      // Launch Stage 5 (App Closed & Locked)
+      const lockedTaskNotice = document.getElementById('locked-task-notice');
+      if (lockedTaskNotice) {
+        lockedTaskNotice.textContent = `YouTube is locked for the next ${hours} hours for "${task}". All distractions shielded!`;
+      }
+      goToStage(5);
+    } catch (err) {
+      console.error('Failed to lock app for study:', err);
+    }
+  });
+
+  // ========================================================
+  // STAGE 5: App Closed / YouTube Locked Overlay
+  // ========================================================
+  const lockedClockDigits = document.getElementById('locked-clock-digits');
+  const btnTestLockedYoutube = document.getElementById('btn-test-locked-youtube');
+  const btnEndStudyLock = document.getElementById('btn-end-study-lock');
+
+  btnTestLockedYoutube?.addEventListener('click', async () => {
+    playWarningBuzzer();
+    await fetch('/api/events/log/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event_type: 'YOUTUBE_ATTEMPT_FOCUS',
+        app_name: 'YouTube',
+        target_url: 'https://youtube.com',
+        note: 'Attempted to open YouTube during locked study block.'
+      })
+    });
+    window.open('/blocked/?app=YouTube&reason=focus_locked', '_blank');
+    refreshAnalytics();
+  });
+
+  btnEndStudyLock?.addEventListener('click', async () => {
+    try {
+      await fetch('/api/focus/end/', { method: 'POST' });
+      showToast('Study Session Concluded', 'Great job honoring your boundary!');
+      refreshAnalytics();
+      goToStage(2);
     } catch (e) {
-      console.debug('Failed to load settings:', e);
+      console.error('End session error:', e);
+    }
+  });
+
+  // ========================================================
+  // Live Timer Synchronizer
+  // ========================================================
+  function startTicker() {
+    if (state.timerInterval) clearInterval(state.timerInterval);
+    state.timerInterval = setInterval(() => {
+      if (state.remainingSeconds > 0) {
+        state.remainingSeconds--;
+        state.elapsedSeconds++;
+
+        if (state.currentStage === 3) {
+          if (breakLiveClock) breakLiveClock.textContent = formatClock(state.remainingSeconds);
+          if (state.remainingSeconds <= 0) {
+            finishBreakAndAskStudy();
+          }
+        } else if (state.currentStage === 5) {
+          if (lockedClockDigits) lockedClockDigits.textContent = formatHoursClock(state.remainingSeconds);
+          if (state.remainingSeconds <= 0) {
+            playChimeStart();
+            showToast('Study Session Completed! 🎉', 'You have honored your study boundary.');
+            goToStage(2);
+          }
+        }
+      }
+    }, 1000);
+  }
+
+  // Refresh Analytics
+  async function refreshAnalytics() {
+    try {
+      const res = await fetch('/api/analytics/');
+      const data = await res.json();
+      const m = data.metrics_table;
+
+      const numYtFocus = document.getElementById('num-yt-focus');
+      const numShortsBlocked = document.getElementById('num-shorts-blocked');
+      const numBreaksCompleted = document.getElementById('num-breaks-completed');
+      const numAvgBreak = document.getElementById('num-avg-break');
+
+      if (numYtFocus) numYtFocus.textContent = m.youtube_attempts_during_focus;
+      if (numShortsBlocked) numShortsBlocked.textContent = m.shorts_blocked;
+      if (numBreaksCompleted) numBreaksCompleted.textContent = `${m.breaks_completed} / ${m.breaks_started}`;
+      if (numAvgBreak) numAvgBreak.textContent = m.avg_break;
+
+      const el = id => document.getElementById(id);
+      if (el('tb-breaks-started')) el('tb-breaks-started').textContent = m.breaks_started;
+      if (el('tb-breaks-completed')) el('tb-breaks-completed').textContent = m.breaks_completed;
+      if (el('tb-shorts-blocked')) el('tb-shorts-blocked').textContent = m.shorts_blocked;
+      if (el('tb-long-videos')) el('tb-long-videos').textContent = m.long_videos_watched;
+      if (el('tb-avg-break')) el('tb-avg-break').textContent = m.avg_break;
+      if (el('tb-avg-planned')) el('tb-avg-planned').textContent = m.avg_planned_break;
+      if (el('tb-overruns')) el('tb-overruns').textContent = m.break_overruns;
+      if (el('tb-yt-focus')) el('tb-yt-focus').textContent = m.youtube_attempts_during_focus;
+      if (el('tb-focus-completed')) el('tb-focus-completed').textContent = m.focus_sessions_completed;
+    } catch (err) {
+      console.debug('Failed to refresh analytics:', err);
     }
   }
 
-  document.getElementById('nav-settings-link')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    loadSettings();
-    modalSettings?.classList.add('open');
+  // Analytics Modal
+  const modalAnalytics = document.getElementById('modal-analytics');
+  const btnViewAnalyticsModal = document.getElementById('btn-view-analytics-modal');
+  const navAnalyticsLink = document.getElementById('nav-analytics-link');
+  const btnCloseAnalytics = document.getElementById('btn-close-analytics');
+  const btnDoneAnalytics = document.getElementById('btn-done-analytics');
+
+  btnViewAnalyticsModal?.addEventListener('click', () => { refreshAnalytics(); modalAnalytics?.classList.add('open'); });
+  navAnalyticsLink?.addEventListener('click', (e) => { e.preventDefault(); refreshAnalytics(); modalAnalytics?.classList.add('open'); });
+  btnCloseAnalytics?.addEventListener('click', () => modalAnalytics?.classList.remove('open'));
+  btnDoneAnalytics?.addEventListener('click', () => modalAnalytics?.classList.remove('open'));
+
+  // Header quick navigation
+  document.getElementById('header-status-btn')?.addEventListener('click', () => {
+    if (state.currentStage === 5) {
+      showToast('App Locked', 'YouTube is locked for your study block.');
+    } else {
+      goToStage(state.currentStage);
+    }
   });
 
-  document.getElementById('btn-close-settings')?.addEventListener('click', () => {
-    modalSettings?.classList.remove('open');
-  });
-
-  document.getElementById('btn-save-settings')?.addEventListener('click', async () => {
-    const checkboxes = document.querySelectorAll('#settings-apps-list input[type="checkbox"]');
-    const apps = [];
-    checkboxes.forEach(chk => {
-      apps.push({
-        name: chk.getAttribute('data-app'),
-        is_enabled: chk.checked
-      });
-    });
-    await fetch('/api/settings/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ apps })
-    });
-    showToast('Rules Saved', 'Protected apps settings updated.');
-    modalSettings?.classList.remove('open');
-  });
-
-  // Initial Load
-  fetchStatus();
+  // Initial Boot
   refreshAnalytics();
   loadVideos('all');
   startTicker();
 
-  setInterval(fetchStatus, 5000);
+  // If already connected from localStorage, start at Stage 2
+  if (state.isConnected) {
+    goToStage(2);
+  } else {
+    goToStage(1);
+  }
 });

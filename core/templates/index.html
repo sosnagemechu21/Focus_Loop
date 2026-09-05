@@ -9,151 +9,375 @@
 </head>
 <body>
 
-  <!-- Top Navigation Bar (Matching Web2Gram Screenshot) -->
+  <!-- Top Brand Navigation Bar -->
   <header class="brand-navbar">
     <a href="/" class="brand-logo-text">FocusLoop</a>
 
-    <nav class="brand-nav-links">
-      <a href="/" class="nav-link active">Home</a>
-      <a href="#dashboard" class="nav-link" id="nav-dashboard-link">Dashboard</a>
-      <a href="#settings" class="nav-link" id="nav-settings-link">Settings</a>
-    </nav>
+    <div class="flow-stage-indicator" id="flow-stage-indicator">
+      <span class="stage-step active" id="badge-step-1">1. Connect</span>
+      <span class="stage-arrow">→</span>
+      <span class="stage-step" id="badge-step-2">2. Break Time</span>
+      <span class="stage-arrow">→</span>
+      <span class="stage-step" id="badge-step-3">3. YouTube (No Shorts)</span>
+      <span class="stage-arrow">→</span>
+      <span class="stage-step" id="badge-step-4">4. Study Hours & Lock</span>
+    </div>
 
     <div class="brand-nav-action">
       <button id="header-status-btn" class="pill-btn">
-        Focus Locked 🔒
+        Focus Ready 🔒
       </button>
     </div>
   </header>
 
-  <!-- Main Content Page -->
-  <main class="page-container" id="dashboard">
-    
-    <!-- Hero Header (Matching Daily Digest Screenshot) -->
-    <section class="digest-hero-header">
-      <div class="digest-title-group">
-        <h1>Daily Digest</h1>
-        <p>Boundary protection, scheduled breaks, and long-form consumption.</p>
-      </div>
+  <!-- Main Container for Sequential Progression -->
+  <main class="page-container">
+    <div class="ux-flow-wrapper">
 
-      <div class="digest-action-pills">
-        <button id="btn-hero-break" class="pill-btn">Start Break</button>
-        <button id="btn-hero-simulate" class="pill-btn">Test Impulse</button>
-        <button id="btn-hero-total" class="pill-btn" title="Total Shorts Blocked">87 Shorts Blocked</button>
-      </div>
-    </section>
+      <!-- ========================================================
+           STAGE 1: CONNECT TO GOOGLE / YOUTUBE ACCOUNT
+           ======================================================== -->
+      <section class="flow-card stage-section" id="stage-connect">
+        <div class="flow-card-header">
+          <div class="step-badge">STAGE 1</div>
+          <h2 class="flow-title">Connect to YouTube / Google</h2>
+        </div>
+        <p class="flow-desc">
+          Connect your Google account to enforce entertainment boundaries and quarantine YouTube Shorts.
+        </p>
 
-    <!-- Main 3-Card Grid (Exact Layout from Screenshot) -->
-    <section class="digest-cards-grid">
-      
-      <!-- Card 1: Active Focus Session -->
-      <article class="digest-card" id="card-focus-session">
-        <div>
-          <div class="card-top-row">
-            <span class="card-tag-pill" id="card-focus-tag">SESSION FOCUS</span>
-            <span class="card-date-text" id="card-focus-remaining">1h 42m remaining</span>
+        <div class="account-prompt-box" id="account-unconnected-box">
+          <div class="prompt-icon-group">
+            <div class="prompt-avatar-unconnected">YT</div>
+            <div class="prompt-text-group">
+              <strong class="prompt-title">Connect your Google Account</strong>
+              <span class="prompt-sub">Required to control YouTube access and block Shorts.</span>
+            </div>
+          </div>
+          <button id="btn-open-connect-modal" class="pill-btn">
+            Connect Google Account 🔑
+          </button>
+        </div>
+
+        <div class="account-connect-box" id="account-connected-box" style="display: none;">
+          <div class="account-info-group">
+            <div class="account-avatar" id="account-avatar-char">G</div>
+            <div class="account-meta">
+              <span class="account-name" id="account-name-text">Google Account: student@gmail.com</span>
+              <span class="account-status-pill" id="account-status-pill">● Protected & Synced</span>
+            </div>
+          </div>
+          <div class="account-actions">
+            <span class="badge-connected-verified">Active Shield ✓</span>
+            <button id="btn-proceed-to-break" class="pill-btn">
+              Continue to Choose Break Time →
+            </button>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ========================================================
+           STAGE 2: CHOOSE BREAK TIME
+           ======================================================== -->
+      <section class="flow-card stage-section" id="stage-choose-break" style="display: none;">
+        <div class="flow-card-header">
+          <div class="step-badge">STAGE 2</div>
+          <h2 class="flow-title">Choose Your Break Time</h2>
+        </div>
+        <p class="flow-desc">
+          How long would you like to take your break? You will be taken directly to YouTube (with Shorts strictly blocked).
+        </p>
+
+        <div class="break-choice-container">
+          <div class="break-pill-options" id="break-options-group">
+            <button type="button" class="break-choice-pill" data-minutes="5">
+              <span class="choice-mins">5 min</span>
+              <span class="choice-sub">Quick rest</span>
+            </button>
+            <button type="button" class="break-choice-pill" data-minutes="10">
+              <span class="choice-mins">10 min</span>
+              <span class="choice-sub">Standard</span>
+            </button>
+            <button type="button" class="break-choice-pill active" data-minutes="15">
+              <span class="choice-mins">15 min</span>
+              <span class="choice-sub">Balanced</span>
+            </button>
+            <button type="button" class="break-choice-pill" data-minutes="20">
+              <span class="choice-mins">20 min</span>
+              <span class="choice-sub">Long break</span>
+            </button>
           </div>
 
-          <h2 class="card-headline" id="card-focus-headline">Study & Deep Work Block</h2>
-          <p class="card-body-text" id="card-focus-body">
-            Outside scheduled breaks, YouTube is strictly locked. Every impulse to open distraction apps is shielded at the boundary.
-          </p>
-        </div>
-
-        <div class="card-footer-row">
-          <div class="card-source-info">FocusLoop Boundary</div>
-          <button class="card-view-btn" id="btn-view-focus-details">View &#8599;</button>
-        </div>
-      </article>
-
-      <!-- Card 2: Intentional Break & Long-Form Filtering -->
-      <article class="digest-card" id="card-break-session">
-        <div>
-          <div class="card-top-row">
-            <span class="card-tag-pill" id="card-break-tag">BREAK MODE</span>
-            <span class="card-date-text" id="card-break-timer-text">20 min allowance</span>
+          <div class="custom-break-row">
+            <label for="input-custom-break" class="subrow-label">Or custom break minutes:</label>
+            <input type="number" id="input-custom-break" class="brand-input brand-input-sm" min="1" max="60" placeholder="15" value="15">
           </div>
 
-          <h2 class="card-headline">Long-Form Only (Shorts Quarantined)</h2>
-          <p class="card-body-text">
-            During approved breaks, high-value long videos are available. Infinite-scroll Shorts and recommendation traps are stripped.
-          </p>
+          <div class="stage-action-bar">
+            <button id="btn-launch-youtube-break" class="pill-btn pill-btn-lg">
+              Go to YouTube Page (No Shorts) 🌿 →
+            </button>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ========================================================
+           STAGE 3: DIRECTLY YOUTUBE PAGE (STRICTLY NO SHORTS)
+           ======================================================== -->
+      <section class="flow-card stage-section" id="stage-youtube-break" style="display: none;">
+        <div class="flow-card-header">
+          <div class="break-title-wrap">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div class="step-badge">STAGE 3</div>
+              <h2 class="flow-title">YouTube Break (No Shorts Allowed)</h2>
+            </div>
+            <!-- Prominent Block Shorts badge matching sketch -->
+            <span class="block-shorts-badge" id="badge-block-shorts">
+              🛡️ Block Shorts • Long-Form Only
+            </span>
+          </div>
         </div>
 
-        <div class="card-footer-row">
-          <div class="card-source-info">YouTube Filtering</div>
-          <button class="card-view-btn" id="btn-view-break-library">View &#8599;</button>
-        </div>
-      </article>
+        <p class="flow-desc">
+          Enjoy intentional long-form videos during your break. Infinite-scroll Shorts and recommendation rabbit holes are strictly quarantined.
+        </p>
 
-      <!-- Card 3: Boundary Telemetry & Friction Metrics -->
-      <article class="digest-card" id="card-analytics-session">
-        <div>
-          <div class="card-top-row">
-            <span class="card-tag-pill">FRICTION TELEMETRY</span>
-            <span class="card-date-text" id="card-analytics-attempts">14 Temptations</span>
+        <!-- Floating/Sticky Break Timer Widget (Signature "(timer)" from sketch) -->
+        <div class="sticky-break-timer-banner" id="sticky-break-timer">
+          <div class="sticky-timer-left">
+            <span class="sticky-timer-caption">Break Remaining</span>
+            <span class="sticky-timer-clock" id="break-live-clock">15:00</span>
+          </div>
+          <div class="sticky-timer-right">
+            <button id="btn-finish-break-now" class="pill-btn">
+              Finish Break & Start Study 🔒
+            </button>
+          </div>
+        </div>
+
+        <!-- Custom Video URL Input Box (Watch any URL or test Shorts filter) -->
+        <div class="custom-video-input-box">
+          <label for="custom-video-url" class="custom-url-label">Search or paste any YouTube video link to watch:</label>
+          <div class="custom-url-form">
+            <input type="url" id="custom-video-url" class="brand-input" placeholder="Paste YouTube URL (e.g. https://www.youtube.com/watch?v=...)">
+            <button id="btn-submit-custom-video" class="pill-btn">Watch Video ↗</button>
+          </div>
+          <div class="test-shorts-row">
+            <span class="test-shorts-label">Shorts defense test:</span>
+            <button id="btn-test-shorts-intercept" class="pill-link-btn" title="Simulates opening a Shorts link">
+              🧪 Try opening a Shorts URL (youtube.com/shorts/...)
+            </button>
+          </div>
+        </div>
+
+        <!-- Inline Distraction-Free Video Player -->
+        <div id="inline-player-container" class="inline-player-container">
+          <div class="inline-player-header">
+            <span id="inline-player-title" class="inline-player-title">Now Playing: How James Webb Space Telescope Unfolds (Veritasium)</span>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <a id="btn-player-external-link" href="https://www.youtube.com/watch?v=4P8fKd0IVWE" target="_blank" class="pill-btn pill-btn-sm pill-btn-outline" style="color: #ffffff; border-color: rgba(255,255,255,0.4);">
+                Open in YouTube ↗
+              </a>
+              <button id="btn-close-inline-player" class="pill-btn pill-btn-sm pill-btn-outline" style="color: #ffffff; border-color: rgba(255,255,255,0.4);">
+                Close Player &times;
+              </button>
+            </div>
+          </div>
+          <div class="inline-iframe-wrap" id="inline-player-iframe">
+            <iframe 
+              src="https://www.youtube.com/embed/4P8fKd0IVWE?rel=0&enablejsapi=1" 
+              title="How James Webb Space Telescope Unfolds" 
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+              referrerpolicy="strict-origin-when-cross-origin"
+              allowfullscreen>
+            </iframe>
+          </div>
+        </div>
+
+        <!-- Curated Break Video List (Horizontal lines from sketch) -->
+        <div class="break-video-feed-container">
+          <div class="feed-header-bar">
+            <span class="feed-label">Approved Long-Form Videos Feed</span>
+            <div class="feed-actions">
+              <button class="filter-pill active" id="filter-all">All Videos</button>
+              <button class="filter-pill" id="filter-saved">Saved</button>
+              <button class="filter-pill" id="btn-surprise-pick">Surprise Pick</button>
+            </div>
           </div>
 
-          <h2 class="card-headline">Attention & Dependency Report</h2>
-          <p class="card-body-text">
-            Measuring temptation, not merely usage: 14 focus attempts prevented, 87 Shorts blocked, and a 4-week dependency drop.
-          </p>
+          <div class="video-rows-list" id="video-cards-grid">
+            <!-- Populated with clean horizontal video rows -->
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ========================================================
+           STAGE 4: ASK STUDY HOURS (TRIGGERED AFTER BREAK)
+           ======================================================== -->
+      <section class="flow-card stage-section" id="stage-ask-study" style="display: none;">
+        <div class="flow-card-header">
+          <div class="step-badge">STAGE 4</div>
+          <h2 class="flow-title">Break is Over! How many hours will you study?</h2>
+        </div>
+        <p class="flow-desc">
+          Rest time has concluded. Choose how many hours you will study, then FocusLoop will lock YouTube and close the entertainment app.
+        </p>
+
+        <div class="study-hours-container">
+          <div class="study-input-row">
+            <label for="study-task-input" class="input-label">What are you studying?</label>
+            <input type="text" id="study-task-input" class="brand-input" placeholder="e.g. Mathematics, Programming, Exam preparation" value="Deep Study Session">
+          </div>
+
+          <div class="study-hours-presets">
+            <span class="input-label">Select study duration:</span>
+            <div class="hours-pills-row" id="study-hours-pills">
+              <button type="button" class="hour-choice-pill" data-hours="1">
+                <span class="hour-title">1 Hour</span>
+                <span class="hour-sub">60 min focus</span>
+              </button>
+              <button type="button" class="hour-choice-pill active" data-hours="2">
+                <span class="hour-title">2 Hours</span>
+                <span class="hour-sub">120 min focus</span>
+              </button>
+              <button type="button" class="hour-choice-pill" data-hours="3">
+                <span class="hour-title">3 Hours</span>
+                <span class="hour-sub">180 min deep block</span>
+              </button>
+              <button type="button" class="hour-choice-pill" data-hours="4">
+                <span class="hour-title">4 Hours</span>
+                <span class="hour-sub">Extended study</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="custom-study-row">
+            <label for="study-custom-hours" class="subrow-label">Or custom hours / minutes:</label>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <input type="number" id="study-custom-hours" class="brand-input brand-input-sm" min="0.5" max="12" step="0.5" placeholder="2" value="2">
+              <span style="font-weight: 700; font-size: 0.9rem;">hours</span>
+            </div>
+          </div>
+
+          <div class="stage-action-bar">
+            <button id="btn-lock-and-close" class="pill-btn pill-btn-lg">
+              Lock YouTube & Close App 🔒
+            </button>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ========================================================
+           STAGE 5: APP CLOSED / YOUTUBE LOCKED OVERLAY
+           ======================================================== -->
+      <section class="flow-card stage-section locked-stage-card" id="stage-app-locked" style="display: none;">
+        <div class="locked-icon-emblem">🔒</div>
+        <h2 class="locked-hero-title">YouTube is Locked for Study</h2>
+        <div class="locked-status-pill">
+          <span>● Shield Active • Entertainment Quarantined</span>
         </div>
 
-        <div class="card-footer-row">
-          <div class="card-source-info">Interaction Analytics</div>
-          <button class="card-view-btn" id="btn-view-analytics-modal">View &#8599;</button>
+        <p class="locked-hero-sub" id="locked-task-notice">
+          FocusLoop has closed YouTube access. Go focus on your study block!
+        </p>
+
+        <!-- Big Countdown Clock -->
+        <div class="locked-countdown-box">
+          <span class="locked-clock-label">Time Remaining in Study Session</span>
+          <div class="locked-clock-digits" id="locked-clock-digits">02:00:00</div>
         </div>
-      </article>
 
-    </section>
-
-    <!-- Key Numbers Row (Matching clean 2-color brand theme) -->
-    <section class="boundary-stats-strip">
-      <div class="stat-block">
-        <h4>YouTube Focus Attempts</h4>
-        <div class="stat-number" id="num-yt-focus">14</div>
-        <p>Temptations blocked</p>
-      </div>
-
-      <div class="stat-block">
-        <h4>Shorts Intercepted</h4>
-        <div class="stat-number" id="num-shorts-blocked">87</div>
-        <p>Dopamine traps prevented</p>
-      </div>
-
-      <div class="stat-block">
-        <h4>Breaks Completed</h4>
-        <div class="stat-number" id="num-breaks-completed">21 / 24</div>
-        <p>86% on-time discipline</p>
-      </div>
-
-      <div class="stat-block">
-        <h4>Average Break</h4>
-        <div class="stat-number" id="num-avg-break">17.1m</div>
-        <p>Planned 20.0m</p>
-      </div>
-    </section>
-
-    <!-- Curated Long-Form Library (Cards in Same Visual Language) -->
-    <section class="longform-library-section">
-      <div class="section-header-row">
-        <h2>Intentional Break Library</h2>
-        <div class="filter-pills-row">
-          <button class="filter-pill active" id="filter-all">All</button>
-          <button class="filter-pill" id="filter-saved">Saved Queue</button>
-          <button class="filter-pill" id="btn-surprise-pick">Surprise Me</button>
+        <div class="locked-test-row">
+          <button id="btn-test-locked-youtube" class="pill-btn pill-btn-outline">
+            Open YouTube (Test Lock Defense)
+          </button>
+          <button id="btn-end-study-lock" class="pill-btn pill-btn-sm pill-btn-outline">
+            Emergency Session End
+          </button>
         </div>
-      </div>
+      </section>
 
-      <div class="video-cards-grid" id="video-cards-grid">
-        <!-- Rendered by JS matching the brand cards -->
-      </div>
-    </section>
 
+      <!-- ========================================================
+           SUBTLE TELEMETRY FOOTER BAR
+           ======================================================== -->
+      <footer class="flow-footer-summary">
+        <div class="footer-stats-group">
+          <span class="footer-stat-item">
+            <strong>Temptations Blocked:</strong> <span id="num-yt-focus">17</span>
+          </span>
+          <span class="stat-separator">•</span>
+          <span class="footer-stat-item">
+            <strong>Shorts Intercepted:</strong> <span id="num-shorts-blocked">91</span>
+          </span>
+          <span class="stat-separator">•</span>
+          <span class="footer-stat-item">
+            <strong>Discipline:</strong> <span id="num-breaks-completed">21 / 24</span>
+          </span>
+          <span class="stat-separator">•</span>
+          <span class="footer-stat-item">
+            <strong>Avg Break:</strong> <span id="num-avg-break">17.1m</span>
+          </span>
+        </div>
+
+        <div class="footer-btn-group">
+          <button class="pill-btn pill-btn-sm pill-btn-outline" id="btn-view-analytics-modal">
+            Attention Report ↗
+          </button>
+        </div>
+      </footer>
+
+    </div>
   </main>
 
-  <!-- MODAL: Interaction Analytics Table (Matching prompt's table) -->
+  <!-- ========================================================
+       MODAL: CONNECT ACCOUNT
+       ======================================================== -->
+  <div id="modal-connect-account" class="modal-backdrop">
+    <div class="modal-sheet">
+      <div class="modal-header-row">
+        <h3>Connect YouTube & Google</h3>
+        <button class="modal-close-btn" id="btn-close-connect-modal">&times;</button>
+      </div>
+
+      <div class="modal-content-body">
+        <p style="font-size: 0.95rem; color: var(--brand-text-muted); margin-bottom: 20px;">
+          Connect your account so FocusLoop can enforce study boundaries and quarantine infinite-scroll Shorts.
+        </p>
+
+        <div class="connect-form-group">
+          <label for="connect-email-input" class="input-label">Google / YouTube Email:</label>
+          <input type="email" id="connect-email-input" class="brand-input" placeholder="e.g. student@gmail.com" value="student@gmail.com">
+        </div>
+
+        <div style="margin-top: 14px; margin-bottom: 20px;">
+          <span class="input-label" style="font-size: 0.82rem;">Quick demo profile:</span>
+          <div style="display: flex; gap: 8px; margin-top: 6px;">
+            <button type="button" class="pill-btn pill-btn-sm pill-btn-outline" id="btn-preset-email-1">student@gmail.com</button>
+            <button type="button" class="pill-btn pill-btn-sm pill-btn-outline" id="btn-preset-email-2">focus.engineer@gmail.com</button>
+          </div>
+        </div>
+
+        <div class="connect-rules-card">
+          <strong style="font-size: 0.9rem;">Boundary Enforcements:</strong>
+          <ul style="font-size: 0.85rem; color: var(--brand-text-muted); margin-top: 8px; padding-left: 20px; line-height: 1.6;">
+            <li>YouTube is locked during study blocks (redirects to defense screen)</li>
+            <li>YouTube Shorts are strictly quarantined during break mode</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="modal-footer-row">
+        <button class="pill-btn" id="btn-confirm-connect">Authorize & Connect Account</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Interaction Analytics Table -->
   <div id="modal-analytics" class="modal-backdrop">
     <div class="modal-sheet">
       <div class="modal-header-row">
@@ -177,90 +401,19 @@
           <tbody id="analytics-tbody">
             <tr><td>Breaks started</td><td style="text-align: right;" class="bold-val" id="tb-breaks-started">24</td><td>Intentional rest initiated</td></tr>
             <tr><td>Breaks completed</td><td style="text-align: right;" class="bold-val" id="tb-breaks-completed">21</td><td>Sessions finished cleanly</td></tr>
-            <tr><td>Shorts blocked</td><td style="text-align: right;" class="bold-val" id="tb-shorts-blocked">87</td><td>Autopilot dopamine loops prevented</td></tr>
+            <tr><td>Shorts blocked</td><td style="text-align: right;" class="bold-val" id="tb-shorts-blocked">91</td><td>Autopilot dopamine loops prevented</td></tr>
             <tr><td>Long videos watched</td><td style="text-align: right;" class="bold-val" id="tb-long-videos">18</td><td>Intentional deep consumption</td></tr>
             <tr><td>Avg break</td><td style="text-align: right;" class="bold-val" id="tb-avg-break">17.1m</td><td>Real consumption duration</td></tr>
             <tr><td>Avg planned break</td><td style="text-align: right;" class="bold-val" id="tb-avg-planned">20m</td><td>Committed expectation</td></tr>
             <tr><td>Break overruns</td><td style="text-align: right;" class="bold-val" id="tb-overruns">3</td><td>Discipline boundary breached</td></tr>
-            <tr><td>YouTube attempts during focus</td><td style="text-align: right;" class="bold-val" id="tb-yt-focus">14</td><td><strong>Temptation metric</strong></td></tr>
+            <tr><td>YouTube attempts during focus</td><td style="text-align: right;" class="bold-val" id="tb-yt-focus">17</td><td><strong>Temptation metric</strong></td></tr>
             <tr><td>Focus sessions completed</td><td style="text-align: right;" class="bold-val" id="tb-focus-completed">19</td><td>Deep work blocks honored</td></tr>
           </tbody>
         </table>
-
-        <div style="background-color: var(--brand-card); padding: 18px 24px; border-radius: 12px; margin-bottom: 16px;">
-          <h4 style="font-size: 1.05rem; font-weight: 800; margin-bottom: 6px;" id="insight-headline">Your breaks are getting healthier.</h4>
-          <p style="font-size: 0.9rem; color: var(--brand-text-muted); margin-bottom: 6px;" id="insight-detail">You planned 20-minute breaks this week and averaged 17.1 minutes.</p>
-          <p style="font-size: 0.9rem; font-weight: 700;" id="insight-temptation">You also attempted to open YouTube 14 times during focus sessions. We blocked them.</p>
-        </div>
-
-        <div style="background-color: var(--brand-card); padding: 18px 24px; border-radius: 12px;">
-          <h4 style="font-size: 0.9rem; font-weight: 800; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em;">Dependency Decline Over Time</h4>
-          <div style="font-family: var(--font-mono); font-size: 0.85rem; line-height: 1.8;">
-            <div>Week 1 &rarr; 43 blocked attempts</div>
-            <div>Week 2 &rarr; 31 blocked attempts</div>
-            <div>Week 3 &rarr; 18 blocked attempts</div>
-            <div>Week 4 &rarr; 14 blocked attempts (Current)</div>
-          </div>
-        </div>
       </div>
 
       <div class="modal-footer-row">
         <button class="pill-btn" id="btn-done-analytics">Done</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: App Protection Setup -->
-  <div id="modal-settings" class="modal-backdrop">
-    <div class="modal-sheet">
-      <div class="modal-header-row">
-        <h3>Protected Apps Configuration</h3>
-        <button class="modal-close-btn" id="btn-close-settings">&times;</button>
-      </div>
-
-      <div class="modal-content-body">
-        <p style="font-size: 0.92rem; color: var(--brand-text-muted); margin-bottom: 20px;">
-          Choose apps you want protected. The system automatically handles them according to schedule.
-        </p>
-
-        <div id="settings-apps-list" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
-          <!-- Populated by JS -->
-        </div>
-
-        <div style="background-color: var(--brand-card); padding: 16px; border-radius: 12px;">
-          <strong style="font-size: 0.9rem;">Special YouTube Rule:</strong>
-          <p style="font-size: 0.85rem; color: var(--brand-text-muted); margin-top: 4px;">
-            During allowed breaks: <em>Long-form only</em> (Shorts are blocked). Outside breaks: <em>Fully locked</em>.
-          </p>
-        </div>
-      </div>
-
-      <div class="modal-footer-row">
-        <button class="pill-btn" id="btn-save-settings">Save Rules</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: Long-Form Video Player -->
-  <div id="modal-video-player" class="modal-backdrop">
-    <div class="modal-sheet" style="max-width: 800px;">
-      <div class="modal-header-row">
-        <div style="display: flex; flex-direction: column;">
-          <span style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--brand-text-muted);">Intentional Break Video</span>
-          <h3 id="player-title" style="font-size: 1.15rem;">Video Player</h3>
-        </div>
-        <button class="modal-close-btn" id="btn-close-player">&times;</button>
-      </div>
-
-      <div class="modal-content-body" style="padding: 24px;">
-        <div class="player-video-box" id="player-iframe-box">
-          <!-- Embedded YouTube player -->
-        </div>
-
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <span style="font-size: 0.85rem; color: var(--brand-text-muted);">Distraction-free viewer. Shorts stripped.</span>
-          <button class="pill-btn" id="btn-player-finish-break">Finish Break & Re-lock</button>
-        </div>
       </div>
     </div>
   </div>

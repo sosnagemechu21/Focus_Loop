@@ -71,6 +71,9 @@ def api_status(request):
         'next_break_time': state.next_break_time.strftime('%I:%M %p') if state.next_break_time else "12:30 PM",
         'active_video_id': state.active_video_id,
         'active_video_title': state.active_video_title,
+        'is_connected': request.session.get('is_connected', False),
+        'connected_email': request.session.get('connected_email', ''),
+        'break_duration_minutes': request.session.get('break_minutes', 15),
         'today': {
             'focus_minutes': int(today_focus_mins),
             'break_minutes': int(today_break_mins),
@@ -81,11 +84,63 @@ def api_status(request):
 
 
 @csrf_exempt
+def api_connect(request):
+    """Connect or disconnect YouTube / Google account"""
+    data = json.loads(request.body) if request.body else {}
+    email = data.get('email', '').strip()
+    connected = data.get('connected', True)
+    if connected and not email:
+        email = 'student@gmail.com'
+    request.session['is_connected'] = connected
+    request.session['connected_email'] = email if connected else ''
+    return JsonResponse({'status': 'ok', 'connected': connected, 'email': email})
+
+
+@csrf_exempt
+def api_validate_video(request):
+    """Validate submitted break video URL and intercept Shorts"""
+    import re
+    data = json.loads(request.body) if request.body else {}
+    url = data.get('url', '').strip()
+    if not url:
+        return JsonResponse({'status': 'error', 'message': 'No URL provided'})
+
+    if 'shorts' in url.lower():
+        BoundaryEvent.objects.create(
+            event_type='SHORTS_BLOCKED_BREAK',
+            app_name='YouTube Shorts',
+            target_url=url,
+            note='Blocked direct Shorts link submitted during break.'
+        )
+        return JsonResponse({
+            'status': 'blocked',
+            'is_short': True,
+            'message': 'Shorts are quarantined! Only intentional long-form videos are allowed.'
+        })
+
+    match = re.search(r'(?:v=|\/|youtu\.be\/)([0-9A-Za-z_-]{11})', url)
+    if match:
+        video_id = match.group(1)
+        return JsonResponse({
+            'status': 'ok',
+            'is_short': False,
+            'video_id': video_id,
+            'title': 'Custom Break Video'
+        })
+    return JsonResponse({
+        'status': 'invalid',
+        'message': 'Please enter a valid YouTube video URL (e.g. https://www.youtube.com/watch?v=...)'
+    })
+
+
+@csrf_exempt
 def api_focus_start(request):
     """Start a new focus session"""
     data = json.loads(request.body) if request.body else {}
     duration = int(data.get('duration_minutes', 50))
+    break_duration = int(data.get('break_minutes', 15))
     task = data.get('task_name', 'Study / Deep Work')
+    request.session['break_minutes'] = break_duration
 
     state = FocusState.get_current()
 

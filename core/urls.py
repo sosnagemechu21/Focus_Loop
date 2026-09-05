@@ -8,6 +8,8 @@ urlpatterns = [
 
     # REST APIs
     path('api/status/', views.api_status, name='api_status'),
+    path('api/connect/', views.api_connect, name='api_connect'),
+    path('api/validate-video/', views.api_validate_video, name='api_validate_video'),
     path('api/focus/start/', views.api_focus_start, name='api_focus_start'),
     path('api/focus/end/', views.api_focus_end, name='api_focus_end'),
     path('api/break/start/', views.api_break_start, name='api_break_start'),
