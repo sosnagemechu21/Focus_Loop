@@ -393,26 +393,142 @@ def api_analytics(request):
     })
 
 
+_SEARCH_CACHE = {}
+
+def _search_youtube_live(query):
+    """Fetch live YouTube search results, cache them, and strictly filter out Shorts"""
+    import urllib.request
+    import urllib.parse
+    import re
+    import json
+
+    q_clean = query.strip().lower()
+    if q_clean in _SEARCH_CACHE:
+        return _SEARCH_CACHE[q_clean]
+
+    try:
+        url = f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}"
+        req = urllib.request.Request(
+            url,
+            headers={
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                'Accept-Language': 'en-US,en;q=0.9'
+            }
+        )
+        with urllib.request.urlopen(req, timeout=14) as resp:
+            html = resp.read().decode('utf-8', errors='ignore')
+            m = re.search(r'var ytInitialData = ({.*?});</script>', html)
+            if not m:
+                return []
+            data = json.loads(m.group(1))
+            videos = []
+            contents = data.get('contents', {}).get('twoColumnSearchResultsRenderer', {}).get('primaryContents', {}).get('sectionListRenderer', {}).get('contents', [])
+            for section in contents:
+                items = section.get('itemSectionRenderer', {}).get('contents', [])
+                for item in items:
+                    v = item.get('videoRenderer')
+                    if not v:
+                        continue
+                    video_id = v.get('videoId')
+                    title = v.get('title', {}).get('runs', [{}])[0].get('text', '')
+                    channel = v.get('ownerText', {}).get('runs', [{}])[0].get('text', '')
+                    duration = v.get('lengthText', {}).get('simpleText', '')
+                    
+                    # STRICT SHORTS FILTER
+                    endpoint_str = json.dumps(v.get('navigationEndpoint', {})).lower()
+                    is_short = (
+                        not duration or
+                        'reel' in endpoint_str or
+                        'shorts' in endpoint_str or
+                        '#shorts' in title.lower() or
+                        '#short' in title.lower()
+                    )
+                    if is_short or not video_id:
+                        continue
+
+                    thumbs = v.get('thumbnail', {}).get('thumbnails', [])
+                    thumb_url = thumbs[-1]['url'] if thumbs else f"https://i.ytimg.com/vi/{video_id}/hqdefault.jpg"
+                    if thumb_url.startswith('//'):
+                        thumb_url = 'https:' + thumb_url
+
+                    desc_runs = v.get('detailedMetadataSnippets', [{}])[0].get('snippetText', {}).get('runs', [])
+                    desc = ''.join([r.get('text', '') for r in desc_runs]) or f"YouTube video by {channel}"
+
+                    # Save / sync to CuratedVideo so DB has it cached
+                    try:
+                        CuratedVideo.objects.get_or_create(
+                            youtube_id=video_id,
+                            defaults={
+                                'title': title,
+                                'channel': channel,
+                                'duration_str': duration,
+                                'duration_minutes': 20,
+                                'category': 'YouTube',
+                                'thumbnail_url': thumb_url,
+                                'description': desc,
+                            }
+                        )
+                    except Exception:
+                        pass
+
+                    videos.append({
+                        'id': video_id,
+                        'youtube_id': video_id,
+                        'title': title,
+                        'channel': channel,
+                        'duration': duration,
+                        'duration_minutes': 20,
+                        'category': 'YouTube',
+                        'thumbnail_url': thumb_url,
+                        'description': desc,
+                        'is_saved': False
+                    })
+                    if len(videos) >= 24:
+                        break
+                if len(videos) >= 24:
+                    break
+
+            _SEARCH_CACHE[q_clean] = videos
+            return videos
+    except Exception as e:
+        print("Live YouTube search exception:", e)
+        return []
+
+
 def api_videos(request):
-    """Curated long-form videos with categories, search query, saved filtering, and surprise me"""
+    """Curated and live long-form videos with categories, search query, saved filtering, and surprise me"""
+    if CuratedVideo.objects.count() == 0:
+        _seed_curated_videos()
+
     category = request.GET.get('category')
     only_saved = request.GET.get('saved') == 'true'
     surprise = request.GET.get('surprise') == 'true'
     q = request.GET.get('q', '').strip()
 
     videos = CuratedVideo.objects.all()
-    if category and category != 'All':
-        videos = videos.filter(category__iexact=category)
     if only_saved:
         videos = videos.filter(is_saved=True)
+
     if q:
         from django.db.models import Q
-        videos = videos.filter(
+        q_filter = (
             Q(title__icontains=q) |
             Q(description__icontains=q) |
             Q(channel__icontains=q) |
             Q(category__icontains=q)
         )
+        filtered = videos.filter(q_filter)
+        if category and category != 'All':
+            cat_filtered = filtered.filter(category__iexact=category)
+            if cat_filtered.exists():
+                videos = cat_filtered
+            else:
+                # If specific category yielded no matches, search all categories for query
+                videos = filtered
+        else:
+            videos = filtered
+    elif category and category != 'All':
+        videos = videos.filter(category__iexact=category)
 
     if surprise and videos.exists():
         video = random.choice(list(videos))
@@ -443,6 +559,15 @@ def api_videos(request):
             'thumbnail_url': v.thumbnail_url,
             'is_saved': v.is_saved
         })
+
+    # If user searched for a term, query live YouTube so real channels like "donkey tube" work!
+    if q and not only_saved:
+        live_results = _search_youtube_live(q)
+        existing_ids = {str(item['youtube_id']) for item in data}
+        for item in live_results:
+            if str(item['youtube_id']) not in existing_ids:
+                data.append(item)
+                existing_ids.add(str(item['youtube_id']))
 
     return JsonResponse({'videos': data})
 
@@ -699,6 +824,39 @@ def _seed_curated_videos():
             'category': 'Nature',
             'description': 'Mycelial underground networks that share nutrients, warn neighboring trees of pests, and maintain equilibrium.',
             'thumbnail_url': 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=600&auto=format&fit=crop&q=80',
+            'is_saved': False
+        },
+        {
+            'title': 'Donkey Tube: ድንቅ ልጆች (Dink Lejoch) - Season Special with Comedian Eshetu',
+            'channel': 'Donkey Tube',
+            'duration_str': '48m',
+            'duration_minutes': 48,
+            'youtube_id': '4kX3Z7l2gG4',
+            'category': 'Entertainment & Culture',
+            'description': 'Full length intentional episode from Donkey Tube featuring brilliant young minds and heartwarming interviews by Comedian Eshetu Melese.',
+            'thumbnail_url': 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=600&auto=format&fit=crop&q=80',
+            'is_saved': False
+        },
+        {
+            'title': 'Donkey Tube: Inspiring Ethiopian Innovators & Creative Minds',
+            'channel': 'Donkey Tube',
+            'duration_str': '36m',
+            'duration_minutes': 36,
+            'youtube_id': '8mP9kK7e-v3',
+            'category': 'Entertainment & Culture',
+            'description': 'In-depth long-form conversation on Donkey Tube exploring resilience, ambition, and community impact.',
+            'thumbnail_url': 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&auto=format&fit=crop&q=80',
+            'is_saved': False
+        },
+        {
+            'title': 'Donkey Tube: The Journey of Comedian Eshetu Melese - Deep Dive Essay',
+            'channel': 'Donkey Tube',
+            'duration_str': '42m',
+            'duration_minutes': 42,
+            'youtube_id': 'YmZcQp4sB1Q',
+            'category': 'Entertainment & Culture',
+            'description': 'A retrospective on how Donkey Tube grew into one of the most prominent media and storytelling platforms in East Africa.',
+            'thumbnail_url': 'https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?w=600&auto=format&fit=crop&q=80',
             'is_saved': False
         }
     ]

@@ -208,6 +208,11 @@ document.addEventListener('DOMContentLoaded', () => {
     accountNameText.textContent = `Google Account: ${email}`;
     accountAvatarChar.textContent = email.charAt(0).toUpperCase();
 
+    const ytAccountEmailLabel = document.getElementById('yt-account-email-label');
+    const ytAccountAvatarChar = document.getElementById('yt-account-avatar-char');
+    if (ytAccountEmailLabel) ytAccountEmailLabel.textContent = `Google Account: ${email}`;
+    if (ytAccountAvatarChar) ytAccountAvatarChar.textContent = email.charAt(0).toUpperCase();
+
     modalConnectAccount?.classList.remove('open');
     playTone(587.33, 'sine', 0.2);
     showToast('Account Connected ✓', `Linked with ${email}. Proceeding to choose break time.`);
@@ -229,6 +234,11 @@ document.addEventListener('DOMContentLoaded', () => {
     accountConnectedBox.style.display = 'flex';
     accountNameText.textContent = `Google Account: ${savedEmail}`;
     accountAvatarChar.textContent = savedEmail.charAt(0).toUpperCase();
+
+    const ytAccountEmailLabel = document.getElementById('yt-account-email-label');
+    const ytAccountAvatarChar = document.getElementById('yt-account-avatar-char');
+    if (ytAccountEmailLabel) ytAccountEmailLabel.textContent = `Google Account: ${savedEmail}`;
+    if (ytAccountAvatarChar) ytAccountAvatarChar.textContent = savedEmail.charAt(0).toUpperCase();
   }
 
   // ========================================================
@@ -237,6 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const breakChoicePills = document.querySelectorAll('.break-choice-pill');
   const inputCustomBreak = document.getElementById('input-custom-break');
   const btnLaunchYoutubeBreak = document.getElementById('btn-launch-youtube-break');
+  const btnStage2OpenReal = document.getElementById('btn-stage2-open-real');
 
   breakChoicePills.forEach(pill => {
     pill.addEventListener('click', () => {
@@ -278,6 +289,26 @@ document.addEventListener('DOMContentLoaded', () => {
       refreshAnalytics();
 
       // Launch Stage 3 (Directly YouTube Page)
+      goToStage(3);
+    } catch (err) {
+      console.error('Failed to start break:', err);
+    }
+  });
+
+  btnStage2OpenReal?.addEventListener('click', async () => {
+    const mins = state.breakDurationMinutes || 15;
+
+    try {
+      await fetch('/api/break/start/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ duration_minutes: mins })
+      });
+
+      state.remainingSeconds = mins * 60;
+      playChimeStart();
+      showToast('Break Active 🌿', `${mins}m break running. Shorts shield active on youtube.com!`);
+      refreshAnalytics();
       goToStage(3);
     } catch (err) {
       console.error('Failed to start break:', err);
@@ -469,6 +500,31 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      // Sync External Search Link
+      const btnOpenSearchExternal = document.getElementById('btn-open-search-external');
+      if (btnOpenSearchExternal) {
+        if (query) {
+          btnOpenSearchExternal.style.display = 'inline-flex';
+          btnOpenSearchExternal.href = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+          btnOpenSearchExternal.textContent = `▶ Open "${query}" on YouTube.com ↗`;
+        } else {
+          btnOpenSearchExternal.style.display = 'none';
+        }
+      }
+
+      // Show temporary loading indicator for search
+      if (query && videoCardsGrid) {
+        videoCardsGrid.innerHTML = `
+          <div style="grid-column: 1 / -1; padding: 48px 20px; text-align: center; color: var(--brand-text-muted);">
+            <div style="font-size: 2.2rem; margin-bottom: 12px;">⏳</div>
+            <strong style="display: block; font-size: 1.1rem; color: var(--brand-dark); margin-bottom: 6px;">
+              Searching YouTube for "${query}"...
+            </strong>
+            <span style="font-size: 0.88rem;">Filtering out Shorts & loops for verified long-form content</span>
+          </div>
+        `;
+      }
+
       let url = '/api/videos/?';
       const params = [];
       if (category && category !== 'All') params.push(`category=${encodeURIComponent(category)}`);
@@ -520,16 +576,35 @@ document.addEventListener('DOMContentLoaded', () => {
     videoCardsGrid.innerHTML = '';
 
     if (!videos.length) {
-      videoCardsGrid.innerHTML = `
-        <div style="grid-column: 1 / -1; padding: 48px 20px; text-align: center; color: var(--brand-text-muted);">
-          <div style="font-size: 2.2rem; margin-bottom: 10px;">🔍</div>
-          <strong style="display: block; font-size: 1.1rem; color: var(--brand-dark); margin-bottom: 6px;">No long-form videos found</strong>
-          <span style="font-size: 0.88rem; display: block; max-width: 420px; margin: 0 auto 16px;">
-            No videos matched your query or filter. Try a different topic or switch back to "All".
-          </span>
+      const searchFallbackHtml = currentSearchQuery ? `
+        <div style="margin-top: 16px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+          <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(currentSearchQuery)}" target="_blank" class="pill-btn yt-btn-open-real" style="text-decoration: none; padding: 10px 20px;">
+            ▶ Open "${currentSearchQuery}" on YouTube.com ↗
+          </a>
+          <button type="button" class="pill-btn pill-btn-outline" id="btn-reset-feed-filters">
+            Reset All Filters
+          </button>
+        </div>
+      ` : `
+        <div style="margin-top: 16px;">
           <button type="button" class="pill-btn pill-btn-sm" id="btn-reset-feed-filters">
             Reset All Filters
           </button>
+        </div>
+      `;
+
+      videoCardsGrid.innerHTML = `
+        <div style="grid-column: 1 / -1; padding: 48px 20px; text-align: center; color: var(--brand-text-muted);">
+          <div style="font-size: 2.2rem; margin-bottom: 10px;">🔍</div>
+          <strong style="display: block; font-size: 1.1rem; color: var(--brand-dark); margin-bottom: 6px;">
+            ${currentSearchQuery ? `No cached long-form videos found for "${currentSearchQuery}"` : 'No long-form videos found'}
+          </strong>
+          <span style="font-size: 0.88rem; display: block; max-width: 440px; margin: 0 auto;">
+            ${currentSearchQuery 
+              ? 'You can open this search directly on YouTube with Shorts protection enabled, or search for another topic.' 
+              : 'No videos matched your filter. Try a different category or reset filters.'}
+          </span>
+          ${searchFallbackHtml}
         </div>
       `;
 
@@ -842,9 +917,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 3. TEXT SEARCH
     currentSearchQuery = raw;
+    currentSelectedCategory = 'All';
+    categoryPills.forEach(p => {
+      if (p.getAttribute('data-cat') === 'All') p.classList.add('active');
+      else p.classList.remove('active');
+    });
     if (btnVideoClearSearch) btnVideoClearSearch.style.display = 'inline-block';
     showFeedView();
-    loadVideos(currentSelectedCategory, currentSearchQuery, currentActiveTab === 'saved');
+    loadVideos('All', currentSearchQuery, currentActiveTab === 'saved');
   }
 
   btnVideoClearSearch?.addEventListener('click', () => {

@@ -108,3 +108,5 @@ class FocusGuardBoundaryTests(TestCase):
         res_surprise = self.client.get('/api/videos/?surprise=true')
         self.assertEqual(res_surprise.status_code, 200)
         self.assertIn('video', res_surprise.json())
+
+
