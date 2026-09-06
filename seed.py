@@ -74,7 +74,7 @@ for i in range(current_long, 18):
     BoundaryEvent.objects.create(
         event_type='LONG_VIDEO_WATCHED',
         app_name='YouTube',
-        target_url='https://www.youtube.com/watch?v=4P8fKd0IVWE',
+        target_url='https://www.youtube.com',
         timestamp=now - timedelta(days=(18 - i) // 3, hours=i % 7),
         note='Intentional long-form video watched during scheduled break.'
     )

@@ -121,11 +121,24 @@ def api_validate_video(request):
     match = re.search(r'(?:v=|\/|youtu\.be\/)([0-9A-Za-z_-]{11})', url)
     if match:
         video_id = match.group(1)
+        curated = CuratedVideo.objects.filter(youtube_id=video_id).first()
+        title = curated.title if curated else 'Custom Long-Form Video'
+        channel = curated.channel if curated else 'YouTube'
+        category = curated.category if curated else 'Curated'
+        duration = curated.duration_str if curated else 'Long-form'
+        thumbnail = curated.thumbnail_url if curated and curated.thumbnail_url else f'https://i.ytimg.com/vi/{video_id}/hqdefault.jpg'
+        description = curated.description if curated else 'Intentional long-form video loaded during scheduled break.'
+
         return JsonResponse({
             'status': 'ok',
             'is_short': False,
             'video_id': video_id,
-            'title': 'Custom Break Video'
+            'title': title,
+            'channel': channel,
+            'category': category,
+            'duration': duration,
+            'thumbnail_url': thumbnail,
+            'description': description
         })
     return JsonResponse({
         'status': 'invalid',

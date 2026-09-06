@@ -124,110 +124,196 @@
 
 
       <!-- ========================================================
-           STAGE 3: DIRECTLY YOUTUBE PAGE (STRICTLY NO SHORTS)
+           STAGE 3: AUTHENTIC YOUTUBE BROWSING (STRICTLY NO SHORTS)
            ======================================================== -->
-      <section class="flow-card stage-section" id="stage-youtube-break" style="display: none;">
-        <div class="flow-card-header">
-          <div class="break-title-wrap">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <div class="step-badge">STAGE 3</div>
-              <h2 class="flow-title">YouTube Break (No Shorts Allowed)</h2>
+      <section class="flow-card stage-section yt-stage-container" id="stage-youtube-break" style="display: none;">
+        
+        <!-- Sticky Break HUD & Safety Banner -->
+        <div class="sticky-break-timer-banner yt-break-hud" id="sticky-break-timer">
+          <div class="sticky-timer-left">
+            <span class="yt-hud-pulse">●</span>
+            <div class="sticky-timer-meta">
+              <span class="sticky-timer-caption">Intentional Break Active</span>
+              <span class="sticky-timer-clock" id="break-live-clock">15:00</span>
             </div>
-            <!-- Prominent Block Shorts badge matching sketch -->
+          </div>
+          <div class="yt-hud-center">
             <span class="block-shorts-badge" id="badge-block-shorts">
-              🛡️ Block Shorts • Long-Form Only
+              🛡️ Shorts Quarantined • Long-Form Only
             </span>
           </div>
-        </div>
-
-        <p class="flow-desc">
-          Enjoy intentional long-form videos during your break. Infinite-scroll Shorts and recommendation rabbit holes are strictly quarantined.
-        </p>
-
-        <!-- Floating/Sticky Break Timer Widget (Signature "(timer)" from sketch) -->
-        <div class="sticky-break-timer-banner" id="sticky-break-timer">
-          <div class="sticky-timer-left">
-            <span class="sticky-timer-caption">Break Remaining</span>
-            <span class="sticky-timer-clock" id="break-live-clock">15:00</span>
-          </div>
           <div class="sticky-timer-right">
-            <button id="btn-finish-break-now" class="pill-btn">
+            <button id="btn-finish-break-now" class="pill-btn pill-btn-finish">
               Finish Break & Start Study 🔒
             </button>
           </div>
         </div>
 
-        <!-- Custom Video URL Input Box (Watch any URL or test Shorts filter) -->
-        <div class="custom-video-input-box">
-          <label for="custom-video-url" class="custom-url-label">Search or paste any YouTube video link to watch:</label>
-          <div class="custom-url-form">
-            <input type="url" id="custom-video-url" class="brand-input" placeholder="Paste YouTube URL (e.g. https://www.youtube.com/watch?v=...)">
-            <button id="btn-submit-custom-video" class="pill-btn">Watch Video ↗</button>
+        <!-- YouTube Brand App Bar & Search -->
+        <div class="yt-app-bar">
+          <div class="yt-app-brand">
+            <div class="yt-logo-badge">
+              <span class="yt-play-icon">▶</span>
+              <span class="yt-logo-title">YouTube</span>
+            </div>
+            <span class="yt-brand-pill">FocusLoop Break</span>
           </div>
-          <div class="test-shorts-row">
-            <span class="test-shorts-label">Shorts defense test:</span>
-            <button id="btn-test-shorts-intercept" class="pill-link-btn" title="Simulates opening a Shorts link">
-              🧪 Try opening a Shorts URL (youtube.com/shorts/...)
+
+          <!-- YouTube Search & Direct URL Input -->
+          <div class="yt-search-container">
+            <form id="yt-search-form" class="yt-search-form" onsubmit="return false;">
+              <div class="yt-search-input-wrap">
+                <span class="yt-search-lens-icon">🔍</span>
+                <input 
+                  type="text" 
+                  id="video-search-input" 
+                  class="yt-search-input" 
+                  placeholder="Search videos or paste YouTube link (Shorts will be quarantined)..." 
+                  autocomplete="off"
+                  spellcheck="false"
+                >
+                <button type="button" id="btn-video-clear-search" class="yt-search-clear-btn" style="display: none;" title="Clear search">✕</button>
+              </div>
+              <button type="submit" id="btn-video-search" class="yt-search-submit-btn" title="Search">
+                <span>Search</span>
+              </button>
+            </form>
+          </div>
+
+          <div class="yt-app-actions">
+            <button id="btn-test-shorts-intercept" class="pill-btn pill-btn-sm yt-btn-test-shorts" title="Simulate opening a /shorts/ URL to verify defense">
+              🧪 Test Shorts Defense
             </button>
           </div>
         </div>
 
-        <!-- Inline Distraction-Free Video Player -->
-        <div id="inline-player-container" class="inline-player-container">
-          <div class="inline-player-header">
-            <span id="inline-player-title" class="inline-player-title">Now Playing: How James Webb Space Telescope Unfolds (Veritasium)</span>
-            <div style="display: flex; gap: 8px; align-items: center;">
-              <a id="btn-player-external-link" href="https://www.youtube.com/watch?v=4P8fKd0IVWE" target="_blank" class="pill-btn pill-btn-sm pill-btn-outline" style="color: #ffffff; border-color: rgba(255,255,255,0.4);">
-                Open in YouTube ↗
-              </a>
-              <button id="btn-close-inline-player" class="pill-btn pill-btn-sm pill-btn-outline" style="color: #ffffff; border-color: rgba(255,255,255,0.4);">
-                Close Player &times;
-              </button>
-            </div>
+        <!-- YouTube Navigation & Filter Chips Bar -->
+        <div class="yt-navigation-bar">
+          <div class="yt-nav-tabs">
+            <button type="button" class="yt-nav-tab active" id="tab-home" data-tab="home">
+              <span class="tab-icon">🏠</span> Home Feed
+            </button>
+            <button type="button" class="yt-nav-tab" id="tab-saved" data-tab="saved">
+              <span class="tab-icon">★</span> Saved Queue (<span id="saved-counter-badge">0</span>)
+            </button>
+            <button type="button" class="yt-nav-tab" id="tab-history" data-tab="history">
+              <span class="tab-icon">🕒</span> Watched (<span id="history-counter-badge">0</span>)
+            </button>
+            <button type="button" class="yt-nav-tab" id="btn-surprise-pick">
+              <span class="tab-icon">🎲</span> Surprise Me
+            </button>
           </div>
-          <div class="inline-iframe-wrap" id="inline-player-iframe">
-            <iframe 
-              src="https://www.youtube.com/embed/4P8fKd0IVWE?rel=0&enablejsapi=1" 
-              title="How James Webb Space Telescope Unfolds" 
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-              referrerpolicy="strict-origin-when-cross-origin"
-              allowfullscreen>
-            </iframe>
+
+          <div class="yt-categories-scroll">
+            <button class="filter-pill active" data-cat="All" id="filter-all">All</button>
+            <button class="filter-pill" data-cat="Science & Tech">Science & Tech</button>
+            <button class="filter-pill" data-cat="Coding & Math">Coding & Math</button>
+            <button class="filter-pill" data-cat="Engineering">Engineering</button>
+            <button class="filter-pill" data-cat="History">History</button>
+            <button class="filter-pill" data-cat="Nature">Nature</button>
+            <button class="filter-pill" data-cat="Craftsmanship">Craftsmanship</button>
+            <button class="filter-pill" data-cat="Art & Essays">Art & Essays</button>
+            <button class="filter-pill" data-cat="Music & Focus">Focus Music</button>
+            <button class="filter-pill" data-cat="Philosophy">Philosophy</button>
           </div>
         </div>
 
-        <!-- Curated Break Video List & Intentional Search -->
-        <div class="break-video-feed-container">
-          <!-- Intentional Direct Search Bar (No Distraction Suggestions) -->
-          <div class="video-search-bar-wrap">
-            <div class="search-input-group">
-              <input type="text" id="video-search-input" class="brand-input" placeholder="🔍 Search any topic (e.g. Science, Space, History, Nature, Coding, Music...)" autocomplete="off">
-              <button id="btn-video-search" class="pill-btn pill-btn-sm" type="button">Search</button>
-              <button id="btn-video-clear-search" class="pill-btn pill-btn-sm pill-btn-outline" type="button" style="display: none;">Clear</button>
+        <!-- ====================================================
+             VIEW 1: YOUTUBE HOME / FEED (THUMBNAIL GRID)
+             ==================================================== -->
+        <div id="yt-feed-view" class="yt-feed-view">
+          <div class="yt-feed-header-row">
+            <div class="yt-feed-header-left">
+              <h3 class="yt-feed-heading" id="feed-results-count">Approved Long-Form Videos</h3>
+              <span class="yt-feed-sub">Filtered intentional content • Infinite loops stripped</span>
             </div>
-            <div class="search-notice-text">Direct query matching • Zero algorithmic distraction suggestions</div>
-          </div>
-
-          <!-- Category and Saved Filter Pills -->
-          <div class="feed-header-bar">
-            <span class="feed-label" id="feed-results-count">Approved Long-Form Videos</span>
-            <div class="feed-actions">
-              <button class="filter-pill active" data-cat="All" id="filter-all">All</button>
-              <button class="filter-pill" data-cat="Science & Tech">Science</button>
-              <button class="filter-pill" data-cat="Nature">Nature</button>
-              <button class="filter-pill" data-cat="History">History</button>
-              <button class="filter-pill" data-cat="Engineering">Engineering</button>
-              <button class="filter-pill" data-cat="Music & Focus">Focus Music</button>
-              <button class="filter-pill saved-pill-badge" id="filter-saved">★ Saved Queue (<span id="saved-counter-badge">0</span>)</button>
-              <button class="filter-pill" id="btn-surprise-pick">Surprise Pick</button>
+            <div class="yt-feed-header-right">
+              <span class="yt-grid-status-badge">100% Long-Form</span>
             </div>
           </div>
 
-          <!-- Scrollable Video List -->
-          <div class="video-rows-list scrollable-video-feed" id="video-cards-grid">
-            <!-- Populated with clean horizontal video rows -->
+          <!-- Real YouTube Video Thumbnail Grid -->
+          <div class="yt-video-grid" id="video-cards-grid">
+            <!-- Dynamically populated with YouTube video cards -->
           </div>
         </div>
+
+        <!-- ====================================================
+             VIEW 2: YOUTUBE WATCH / THEATER VIEW
+             ==================================================== -->
+        <div id="yt-watch-view" class="yt-watch-view" style="display: none;">
+          <div class="yt-watch-topbar">
+            <button id="btn-back-to-feed" class="pill-btn pill-btn-sm pill-btn-outline yt-back-btn">
+              ← Back to YouTube Feed
+            </button>
+            <div class="yt-watch-policy-pill">
+              <span>● Boundary Shield Active • Break Timer Running</span>
+            </div>
+          </div>
+
+          <div class="yt-watch-layout">
+            <!-- Left: Main Video Player & Details -->
+            <div class="yt-watch-main">
+              <div class="yt-player-aspect-wrapper" id="inline-player-container">
+                <div class="inline-iframe-wrap" id="inline-player-iframe">
+                  <!-- YouTube iframe embed injected here -->
+                </div>
+              </div>
+
+              <div class="yt-video-details-card">
+                <h1 id="watch-video-title" class="watch-title-heading">Video Title</h1>
+                <span id="inline-player-title" style="display: none;"></span>
+
+                <div class="yt-video-toolbar">
+                  <div class="yt-channel-info-group">
+                    <div class="yt-channel-avatar" id="watch-channel-avatar">Y</div>
+                    <div class="yt-channel-names">
+                      <span class="yt-channel-title" id="watch-channel-name">Channel</span>
+                      <span class="yt-channel-badge">Verified Intentional Creator</span>
+                    </div>
+                  </div>
+
+                  <div class="yt-video-actions">
+                    <button id="btn-watch-save" class="pill-btn pill-btn-sm pill-btn-outline" type="button">
+                      ★ Save to Queue
+                    </button>
+                    <button id="btn-watch-copy" class="pill-btn pill-btn-sm pill-btn-outline" type="button">
+                      🔗 Copy URL
+                    </button>
+                    <a id="btn-player-external-link" href="#" target="_blank" class="pill-btn pill-btn-sm pill-btn-outline">
+                      Open in YouTube ↗
+                    </a>
+                  </div>
+                </div>
+
+                <!-- Video Description Box -->
+                <div class="yt-description-box" id="watch-description-box">
+                  <div class="yt-desc-meta-row">
+                    <span id="watch-duration-tag" class="yt-desc-pill">24 min</span>
+                    <span id="watch-category-tag" class="yt-desc-pill">Science & Tech</span>
+                    <span class="yt-desc-pill yt-desc-pill-shield">🛡️ Long-Form Verified</span>
+                  </div>
+                  <p id="watch-video-desc" class="yt-desc-text">Video description...</p>
+                  <div class="yt-desc-notice">
+                    FocusLoop Rule: Videos under 5 minutes or infinite /shorts/ feeds are quarantined. This video was permitted under your active intentional break.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Up Next Intentional Long-Form Queue -->
+            <div class="yt-watch-sidebar">
+              <div class="yt-sidebar-header">
+                <h4>Up Next (Curated Long-Form)</h4>
+                <span class="yt-sidebar-sub">No algorithm traps</span>
+              </div>
+              <div class="yt-up-next-list" id="up-next-list">
+                <!-- Dynamically populated with related long-form videos -->
+              </div>
+            </div>
+          </div>
+        </div>
+
       </section>
 
 
@@ -431,6 +517,49 @@
 
       <div class="modal-footer-row">
         <button class="pill-btn" id="btn-done-analytics">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Shorts Quarantined Defense Alert -->
+  <div id="modal-shorts-quarantined" class="modal-backdrop">
+    <div class="modal-sheet modal-quarantine-sheet">
+      <div class="modal-header-row">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span class="quarantine-icon-circle">🚫</span>
+          <h3 style="color: #b91c1c;">YouTube Shorts Quarantined!</h3>
+        </div>
+        <button class="modal-close-btn" id="btn-close-quarantine-modal">&times;</button>
+      </div>
+
+      <div class="modal-content-body">
+        <div class="quarantine-hero-box">
+          <div class="quarantine-shield-badge">🛡️ Boundary Enforced</div>
+          <p class="quarantine-main-msg">
+            FocusLoop strictly intercepts <strong>/shorts/*</strong> navigation and short-form infinite reels.
+          </p>
+          <div class="quarantine-url-pill" id="quarantine-intercepted-url">
+            youtube.com/shorts/...
+          </div>
+        </div>
+
+        <div class="quarantine-reasons-card">
+          <strong>Why is this blocked during your break?</strong>
+          <ul class="quarantine-reasons-list">
+            <li><strong>Dopamine hijacking:</strong> Shorts are engineered for frictionless, infinite autopilot scrolling that overruns planned breaks.</li>
+            <li><strong>Intentional entertainment only:</strong> Your break allows full-length documentary, educational, music, and deep video essays.</li>
+            <li><strong>Telemetry logged:</strong> This interception has been recorded in your attention report to measure declining impulse dependency.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="modal-footer-row quarantine-footer-actions">
+        <button class="pill-btn pill-btn-outline" id="btn-quarantine-surprise">
+          🎲 Play a Long-Form Video Instead
+        </button>
+        <button class="pill-btn pill-btn-quarantine-dismiss" id="btn-dismiss-quarantine">
+          Return to YouTube Feed 🌿
+        </button>
       </div>
     </div>
   </div>
