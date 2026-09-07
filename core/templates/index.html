@@ -2,60 +2,70 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FocusLoop - Intentional YouTube & Break Boundary</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#141414">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FocusLoop">
+  <title>FocusLoop - Long-Form YouTube</title>
+  
+  <link rel="manifest" href="/static/manifest.json">
+  <link rel="apple-touch-icon" href="/static/img/icon-192.png">
   <link rel="stylesheet" href="/static/css/styles.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22><text y=%2224%22 font-size=%2222%22>FL</text></svg>">
+  <link rel="icon" href="/static/img/icon-192.png">
 </head>
 <body>
 
-  <!-- Top Brand Navigation Bar -->
+  <!-- Top Navigation -->
   <header class="brand-navbar">
-    <a href="/" class="brand-logo-text">FocusLoop</a>
+    <div class="brand-nav-left">
+      <a href="/" class="brand-logo-text">FocusLoop</a>
+      <span class="brand-sub-badge">Long-Form Only</span>
+    </div>
 
     <div class="flow-stage-indicator" id="flow-stage-indicator">
       <span class="stage-step active" id="badge-step-1">1. Connect</span>
-      <span class="stage-arrow">→</span>
-      <span class="stage-step" id="badge-step-2">2. Break Time</span>
-      <span class="stage-arrow">→</span>
-      <span class="stage-step" id="badge-step-3">3. YouTube (No Shorts)</span>
-      <span class="stage-arrow">→</span>
-      <span class="stage-step" id="badge-step-4">4. Study Hours & Lock</span>
+      <span class="stage-arrow">/</span>
+      <span class="stage-step" id="badge-step-2">2. Break</span>
+      <span class="stage-arrow">/</span>
+      <span class="stage-step" id="badge-step-3">3. Watch</span>
+      <span class="stage-arrow">/</span>
+      <span class="stage-step" id="badge-step-4">4. Study</span>
     </div>
 
     <div class="brand-nav-action">
-      <button id="header-status-btn" class="pill-btn">
-        Focus Ready 🔒
+      <button id="btn-install-pwa" class="pill-btn pill-btn-sm pill-btn-outline" style="display: none;">
+        Install App
+      </button>
+      <button id="header-status-btn" class="pill-btn pill-btn-sm">
+        Ready
       </button>
     </div>
   </header>
 
-  <!-- Main Container for Sequential Progression -->
+  <!-- Main Container -->
   <main class="page-container">
     <div class="ux-flow-wrapper">
 
       <!-- ========================================================
-           STAGE 1: CONNECT TO GOOGLE / YOUTUBE ACCOUNT
+           STAGE 1: CONNECT GOOGLE / YOUTUBE ACCOUNT
            ======================================================== -->
       <section class="flow-card stage-section" id="stage-connect">
         <div class="flow-card-header">
-          <div class="step-badge">STAGE 1</div>
-          <h2 class="flow-title">Connect to YouTube / Google</h2>
+          <span class="step-badge">Stage 1</span>
+          <h2 class="flow-title">Connect Account</h2>
         </div>
         <p class="flow-desc">
-          Connect your Google account to enforce entertainment boundaries and quarantine YouTube Shorts.
+          Sign in with your Google account to manage breaks and isolate long-form content.
         </p>
 
         <div class="account-prompt-box" id="account-unconnected-box">
-          <div class="prompt-icon-group">
-            <div class="prompt-avatar-unconnected">YT</div>
-            <div class="prompt-text-group">
-              <strong class="prompt-title">Connect your Google Account</strong>
-              <span class="prompt-sub">Required to control YouTube access and block Shorts.</span>
-            </div>
+          <div class="prompt-text-group">
+            <strong class="prompt-title">Google Account</strong>
+            <span class="prompt-sub">Required to apply intentional break limits.</span>
           </div>
-          <button id="btn-open-connect-modal" class="pill-btn">
-            Connect Google Account 🔑
+          <button id="btn-open-connect-modal" class="pill-btn" type="button">
+            Connect Account
           </button>
         </div>
 
@@ -63,14 +73,13 @@
           <div class="account-info-group">
             <div class="account-avatar" id="account-avatar-char">G</div>
             <div class="account-meta">
-              <span class="account-name" id="account-name-text">Google Account: student@gmail.com</span>
-              <span class="account-status-pill" id="account-status-pill">● Protected & Synced</span>
+              <span class="account-name" id="account-name-text">student@gmail.com</span>
+              <span class="account-status-pill" id="account-status-pill">Connected</span>
             </div>
           </div>
           <div class="account-actions">
-            <span class="badge-connected-verified">Active Shield ✓</span>
-            <button id="btn-proceed-to-break" class="pill-btn">
-              Continue to Choose Break Time →
+            <button id="btn-proceed-to-break" class="pill-btn" type="button">
+              Continue to Break Time
             </button>
           </div>
         </div>
@@ -82,18 +91,18 @@
            ======================================================== -->
       <section class="flow-card stage-section" id="stage-choose-break" style="display: none;">
         <div class="flow-card-header">
-          <div class="step-badge">STAGE 2</div>
-          <h2 class="flow-title">Choose Your Break Time</h2>
+          <span class="step-badge">Stage 2</span>
+          <h2 class="flow-title">Choose Break Duration</h2>
         </div>
         <p class="flow-desc">
-          How long would you like to take your break? You will be taken directly to YouTube (with Shorts strictly blocked).
+          Select your break duration. Shorts are strictly excluded.
         </p>
 
         <div class="break-choice-container">
           <div class="break-pill-options" id="break-options-group">
             <button type="button" class="break-choice-pill" data-minutes="5">
               <span class="choice-mins">5 min</span>
-              <span class="choice-sub">Quick rest</span>
+              <span class="choice-sub">Quick</span>
             </button>
             <button type="button" class="break-choice-pill" data-minutes="10">
               <span class="choice-mins">10 min</span>
@@ -105,304 +114,213 @@
             </button>
             <button type="button" class="break-choice-pill" data-minutes="20">
               <span class="choice-mins">20 min</span>
-              <span class="choice-sub">Long break</span>
+              <span class="choice-sub">Extended</span>
             </button>
           </div>
 
           <div class="custom-break-row">
-            <label for="input-custom-break" class="subrow-label">Or custom break minutes:</label>
-            <input type="number" id="input-custom-break" class="brand-input brand-input-sm" min="1" max="60" placeholder="15" value="15">
+            <label for="input-custom-break" class="subrow-label">Custom minutes:</label>
+            <input type="number" id="input-custom-break" class="brand-input brand-input-sm" min="1" max="60" value="15">
           </div>
 
-          <div class="stage-action-bar" style="display: flex; flex-direction: column; gap: 12px; align-items: center; margin-top: 24px;">
-            <button id="btn-launch-youtube-break" class="pill-btn pill-btn-lg" style="width: 100%; max-width: 500px; font-weight: 700;">
-              Start Break & Browse Long-Form YouTube →
+          <div class="stage-action-bar">
+            <button id="btn-launch-youtube-break" class="pill-btn pill-btn-lg" type="button">
+              Start Break
             </button>
-            <span style="font-size: 0.85rem; color: var(--brand-text-muted); text-align: center;">
-              🛡️ Intentional entertainment only. Shorts loops and infinite reels remain strictly quarantined.
-            </span>
           </div>
         </div>
       </section>
 
 
       <!-- ========================================================
-           STAGE 3: AUTHENTIC YOUTUBE BROWSING (STRICTLY NO SHORTS)
+           STAGE 3: YOUTUBE VIEWER (WATCH, SAVED, CHANNELS)
            ======================================================== -->
       <section class="flow-card stage-section yt-stage-container" id="stage-youtube-break" style="display: none;">
         
-        <!-- Sticky Break HUD & Safety Banner -->
+        <!-- Break Timer Bar -->
         <div class="sticky-break-timer-banner yt-break-hud" id="sticky-break-timer">
           <div class="sticky-timer-left">
-            <span class="yt-hud-pulse">●</span>
             <div class="sticky-timer-meta">
-              <span class="sticky-timer-caption">Intentional Break Active</span>
+              <span class="sticky-timer-caption">Break Time Remaining</span>
               <span class="sticky-timer-clock" id="break-live-clock">15:00</span>
             </div>
           </div>
-          <div class="yt-hud-center">
-            <span class="block-shorts-badge" id="badge-block-shorts">
-              🛡️ Shorts Quarantined • Long-Form Only
-            </span>
-          </div>
           <div class="sticky-timer-right">
-            <button id="btn-finish-break-now" class="pill-btn pill-btn-finish">
-              Finish Break & Start Study 🔒
+            <button id="btn-finish-break-now" class="pill-btn pill-btn-finish" type="button">
+              Finish Break & Study
             </button>
           </div>
         </div>
 
-        <!-- Google Account YouTube Status Bar -->
-        <div class="yt-google-account-banner" id="yt-google-account-banner">
-          <div class="yt-account-badge-left">
-            <div class="yt-account-icon" id="yt-account-avatar-char">G</div>
-            <div class="yt-account-details">
-              <span class="yt-account-email" id="yt-account-email-label">Google Account: student@gmail.com</span>
-              <span class="yt-account-sub">Intentional Break Active • Entertainment Unlocked (Shorts Shield Running)</span>
+        <!-- Search Bar -->
+        <div class="yt-search-container">
+          <form id="yt-search-form" class="yt-search-form" onsubmit="return false;">
+            <div class="yt-search-input-wrap">
+              <input 
+                type="text" 
+                id="video-search-input" 
+                class="yt-search-input" 
+                placeholder="Search videos, creators, or paste link..." 
+                autocomplete="off"
+                spellcheck="false"
+              >
+              <button type="button" id="btn-video-clear-search" class="yt-search-clear-btn" style="display: none;">Clear</button>
             </div>
-          </div>
-          <div class="yt-account-badge-right">
-            <span class="badge-connected-verified" style="font-size: 0.82rem; padding: 6px 14px;">
-              🛡️ Long-Form Shield Active
-            </span>
-          </div>
+            <button type="submit" id="btn-video-search" class="yt-search-submit-btn">Search</button>
+          </form>
         </div>
 
-        <!-- YouTube Brand App Bar & Search -->
-        <div class="yt-app-bar">
-          <div class="yt-app-brand">
-            <div class="yt-logo-badge">
-              <span class="yt-play-icon">▶</span>
-              <span class="yt-logo-title">YouTube</span>
-            </div>
-            <span class="yt-brand-pill">FocusLoop Break</span>
-          </div>
-
-          <!-- YouTube Search & Direct URL Input -->
-          <div class="yt-search-container">
-            <form id="yt-search-form" class="yt-search-form" onsubmit="return false;">
-              <div class="yt-search-input-wrap">
-                <span class="yt-search-lens-icon">🔍</span>
-                <input 
-                  type="text" 
-                  id="video-search-input" 
-                  class="yt-search-input" 
-                  placeholder="Search YouTube (e.g. Donkey Tube, Veritasium, Documentaries)..." 
-                  autocomplete="off"
-                  spellcheck="false"
-                >
-                <button type="button" id="btn-video-clear-search" class="yt-search-clear-btn" style="display: none;" title="Clear search">✕</button>
-              </div>
-              <button type="submit" id="btn-video-search" class="yt-search-submit-btn" title="Search">
-                <span>Search</span>
-              </button>
-            </form>
-          </div>
-
-          <div class="yt-app-actions">
-            <button id="btn-open-add-channel-modal" class="pill-btn pill-btn-sm" style="background: var(--brand-dark); color: var(--brand-canvas); font-weight: 700;" title="Add any YouTube channel to backend and strip shorts">
-              ➕ Add Channel
-            </button>
-            <button id="btn-test-shorts-intercept" class="pill-btn pill-btn-sm yt-btn-test-shorts" title="Simulate opening a /shorts/ URL to verify defense">
-              🧪 Test Shorts Defense
-            </button>
-          </div>
-        </div>
-
-        <!-- YouTube Navigation & Filter Chips Bar -->
+        <!-- Primary Simple Tabs: Watch | Saved | Channels -->
         <div class="yt-navigation-bar">
           <div class="yt-nav-tabs">
             <button type="button" class="yt-nav-tab active" id="tab-home" data-tab="home">
-              <span class="tab-icon">🏠</span> Home Feed
-            </button>
-            <button type="button" class="yt-nav-tab" id="tab-channels" data-tab="channels">
-              <span class="tab-icon">📺</span> Channels (<span id="channels-counter-badge">0</span>)
+              Watch
             </button>
             <button type="button" class="yt-nav-tab" id="tab-saved" data-tab="saved">
-              <span class="tab-icon">★</span> Saved Queue (<span id="saved-counter-badge">0</span>)
+              Saved (<span id="saved-counter-badge">0</span>)
             </button>
-            <button type="button" class="yt-nav-tab" id="tab-history" data-tab="history">
-              <span class="tab-icon">🕒</span> Watched (<span id="history-counter-badge">0</span>)
+            <button type="button" class="yt-nav-tab" id="tab-channels" data-tab="channels">
+              Channels (<span id="channels-counter-badge">0</span>)
             </button>
             <button type="button" class="yt-nav-tab" id="btn-surprise-pick">
-              <span class="tab-icon">🎲</span> Surprise Me
+              Random
             </button>
           </div>
 
           <div class="yt-categories-scroll">
             <button class="filter-pill active" data-cat="All" id="filter-all">All</button>
-            <button class="filter-pill" data-cat="Entertainment & Culture">Entertainment & Culture</button>
             <button class="filter-pill" data-cat="Science & Tech">Science & Tech</button>
             <button class="filter-pill" data-cat="Coding & Math">Coding & Math</button>
             <button class="filter-pill" data-cat="Engineering">Engineering</button>
             <button class="filter-pill" data-cat="History">History</button>
             <button class="filter-pill" data-cat="Nature">Nature</button>
-            <button class="filter-pill" data-cat="Craftsmanship">Craftsmanship</button>
-            <button class="filter-pill" data-cat="Art & Essays">Art & Essays</button>
-            <button class="filter-pill" data-cat="Music & Focus">Focus Music</button>
-            <button class="filter-pill" data-cat="Philosophy">Philosophy</button>
+            <button class="filter-pill" data-cat="Entertainment & Culture">Culture</button>
+            <button class="filter-pill" data-cat="Art & Essays">Essays</button>
           </div>
         </div>
 
-        <!-- ====================================================
-             VIEW 1: YOUTUBE HOME / FEED (THUMBNAIL GRID)
-             ==================================================== -->
+        <!-- TAB 1: WATCH / FEED VIEW -->
         <div id="yt-feed-view" class="yt-feed-view">
           <div class="yt-feed-header-row">
+            <h3 class="yt-feed-heading" id="feed-results-count">Long-Form Videos</h3>
+            <button id="btn-open-add-channel-top" class="pill-btn pill-btn-sm pill-btn-outline" type="button">
+              Add Channel
+            </button>
+          </div>
+
+          <!-- Video Grid -->
+          <div class="yt-video-grid" id="video-cards-grid"></div>
+        </div>
+
+        <!-- TAB 2: CHANNELS VIEW -->
+        <div id="yt-channels-view" class="yt-channels-view" style="display: none;">
+          <div class="yt-feed-header-row" id="channels-main-header">
             <div class="yt-feed-header-left">
-              <h3 class="yt-feed-heading" id="feed-results-count">Approved Long-Form Videos</h3>
-              <span class="yt-feed-sub">Filtered intentional content • Infinite loops stripped</span>
+              <h3 class="yt-feed-heading" id="channels-list-heading">Subscribed Channels</h3>
+              <span class="yt-feed-sub">Shorts are automatically excluded from all channels</span>
             </div>
-            <div class="yt-feed-header-right" style="display: flex; gap: 8px; align-items: center;">
-              <span class="yt-grid-status-badge">100% Long-Form Only</span>
+            <div class="yt-feed-header-right">
+              <button id="btn-channels-add-new" class="pill-btn pill-btn-sm" type="button">
+                Add Channel
+              </button>
             </div>
           </div>
 
-          <!-- Real YouTube Video Thumbnail Grid -->
-          <div class="yt-video-grid" id="video-cards-grid">
-            <!-- Dynamically populated with YouTube video cards -->
+          <!-- Active Channel Focus Banner -->
+          <div id="channel-focus-banner" class="channel-focus-banner" style="display: none;">
+            <div class="channel-banner-left">
+              <div class="channel-focus-avatar-wrap">
+                <img id="channel-focus-avatar" src="" alt="Channel" class="channel-focus-avatar-img">
+                <div id="channel-focus-avatar-fallback" class="channel-focus-avatar-fallback">C</div>
+              </div>
+              <div class="channel-focus-meta">
+                <h2 id="channel-focus-title" class="channel-focus-name">Channel</h2>
+                <div class="channel-subline-row">
+                  <span id="channel-focus-handle" class="channel-focus-handle">@handle</span>
+                  <span>-</span>
+                  <span id="channel-focus-subs" class="channel-focus-subs">Subscribers</span>
+                  <span>-</span>
+                  <span id="channel-focus-video-count" class="channel-focus-count">0 Videos</span>
+                </div>
+              </div>
+            </div>
+            <div class="channel-banner-right">
+              <button id="btn-back-to-all-channels" class="pill-btn pill-btn-sm pill-btn-outline" type="button">
+                Back to Channels
+              </button>
+            </div>
+          </div>
+
+          <!-- Channel Videos Grid -->
+          <div id="channel-videos-grid" class="yt-video-grid" style="display: none;"></div>
+
+          <!-- Channels Cards Directory Grid -->
+          <div id="channels-cards-grid" class="channels-cards-grid"></div>
+
+          <!-- Recommended Creators Shelf -->
+          <div class="popular-channels-shelf" id="popular-channels-shelf">
+            <div class="popular-shelf-header">
+              <h4>Recommended Channels</h4>
+              <span>Click to add</span>
+            </div>
+            <div id="popular-channels-chips" class="popular-channels-chips"></div>
           </div>
         </div>
 
-        <!-- ====================================================
-             VIEW 2: YOUTUBE WATCH / THEATER VIEW
-             ==================================================== -->
+        <!-- THEATER / WATCH PLAYER VIEW -->
         <div id="yt-watch-view" class="yt-watch-view" style="display: none;">
           <div class="yt-watch-topbar">
-            <button id="btn-back-to-feed" class="pill-btn pill-btn-sm pill-btn-outline yt-back-btn">
-              ← Back to YouTube Feed
+            <button id="btn-back-to-feed" class="pill-btn pill-btn-sm pill-btn-outline" type="button">
+              Back to Videos
             </button>
             <div class="yt-watch-policy-pill">
-              <span>● Boundary Shield Active • Break Timer Running</span>
+              <span>Long-Form Video Active</span>
             </div>
           </div>
 
           <div class="yt-watch-layout">
-            <!-- Left: Main Video Player & Details -->
             <div class="yt-watch-main">
               <div class="yt-player-aspect-wrapper" id="inline-player-container">
-                <div class="inline-iframe-wrap" id="inline-player-iframe">
-                  <!-- YouTube iframe embed injected here -->
-                </div>
+                <div class="inline-iframe-wrap" id="inline-player-iframe"></div>
               </div>
 
               <div class="yt-video-details-card">
                 <h1 id="watch-video-title" class="watch-title-heading">Video Title</h1>
-                <span id="inline-player-title" style="display: none;"></span>
 
                 <div class="yt-video-toolbar">
                   <div class="yt-channel-info-group">
-                    <div class="yt-channel-avatar" id="watch-channel-avatar">Y</div>
+                    <div class="yt-channel-avatar" id="watch-channel-avatar">C</div>
                     <div class="yt-channel-names">
                       <span class="yt-channel-title" id="watch-channel-name">Channel</span>
-                      <span class="yt-channel-badge">Verified Intentional Creator</span>
                     </div>
                   </div>
 
                   <div class="yt-video-actions">
                     <button id="btn-watch-save" class="pill-btn pill-btn-sm pill-btn-outline" type="button">
-                      ★ Save to Queue
+                      Save Video
                     </button>
                     <button id="btn-watch-copy" class="pill-btn pill-btn-sm pill-btn-outline" type="button">
-                      🔗 Copy URL
+                      Copy Link
                     </button>
-                    <a id="btn-player-external-link" href="#" target="_blank" class="pill-btn pill-btn-sm pill-btn-outline">
-                      Open in YouTube ↗
-                    </a>
                   </div>
                 </div>
 
-                <!-- Video Description Box -->
                 <div class="yt-description-box" id="watch-description-box">
                   <div class="yt-desc-meta-row">
                     <span id="watch-duration-tag" class="yt-desc-pill">24 min</span>
-                    <span id="watch-category-tag" class="yt-desc-pill">Science & Tech</span>
-                    <span class="yt-desc-pill yt-desc-pill-shield">🛡️ Long-Form Verified</span>
+                    <span id="watch-category-tag" class="yt-desc-pill">Category</span>
                   </div>
-                  <p id="watch-video-desc" class="yt-desc-text">Video description...</p>
-                  <div class="yt-desc-notice">
-                    FocusLoop Rule: Videos under 5 minutes or infinite /shorts/ feeds are quarantined. This video was permitted under your active intentional break.
-                  </div>
+                  <p id="watch-video-desc" class="yt-desc-text">Video description</p>
                 </div>
               </div>
             </div>
 
-            <!-- Right: Up Next Intentional Long-Form Queue -->
+            <!-- Up Next List -->
             <div class="yt-watch-sidebar">
               <div class="yt-sidebar-header">
-                <h4>Up Next (Curated Long-Form)</h4>
-                <span class="yt-sidebar-sub">No algorithm traps</span>
+                <h4>Up Next</h4>
               </div>
-              <div class="yt-up-next-list" id="up-next-list">
-                <!-- Dynamically populated with related long-form videos -->
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ====================================================
-             VIEW 3: YOUTUBE CHANNELS DIRECTORY (STRICTLY NO SHORTS)
-             ==================================================== -->
-        <div id="yt-channels-view" class="yt-channels-view" style="display: none;">
-          <div class="yt-feed-header-row" id="channels-main-header">
-            <div class="yt-feed-header-left">
-              <h3 class="yt-feed-heading" id="channels-list-heading">My Subscribed YouTube Channels</h3>
-              <span class="yt-feed-sub">Every channel's full long-form catalog • All Shorts strictly quarantined</span>
-            </div>
-            <div class="yt-feed-header-right">
-              <button id="btn-channels-add-new" class="pill-btn pill-btn-sm" type="button" style="background: var(--brand-dark); color: var(--brand-canvas); font-weight: 700;">
-                ➕ Add Another Channel
-              </button>
-            </div>
-          </div>
-
-          <!-- Active Channel Banner (when a single channel is selected) -->
-          <div id="channel-focus-banner" class="channel-focus-banner" style="display: none;">
-            <div class="channel-banner-left">
-              <div class="channel-focus-avatar-wrap">
-                <img id="channel-focus-avatar" src="" alt="Channel Avatar" class="channel-focus-avatar-img">
-                <div id="channel-focus-avatar-fallback" class="channel-focus-avatar-fallback">Y</div>
-              </div>
-              <div class="channel-focus-meta">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <h2 id="channel-focus-title" class="channel-focus-name">Channel Name</h2>
-                  <span class="channel-badge-check" title="Verified Creator">✓</span>
-                </div>
-                <div class="channel-subline-row">
-                  <span id="channel-focus-handle" class="channel-focus-handle">@handle</span>
-                  <span>•</span>
-                  <span id="channel-focus-subs" class="channel-focus-subs">Subscribers</span>
-                  <span>•</span>
-                  <span id="channel-focus-video-count" class="channel-focus-count">0 Long-Form Videos</span>
-                </div>
-              </div>
-            </div>
-            <div class="channel-banner-right">
-              <span class="channel-shield-guarantee">🛡️ 100% Long-Form • Zero Shorts</span>
-              <button id="btn-back-to-all-channels" class="pill-btn pill-btn-sm pill-btn-outline" type="button">
-                ← All Channels
-              </button>
-            </div>
-          </div>
-
-          <!-- Channel Long-form Videos Grid (shown when viewing a specific channel) -->
-          <div id="channel-videos-grid" class="yt-video-grid" style="display: none;"></div>
-
-          <!-- Channels Cards Directory Grid (shown when viewing all channels) -->
-          <div id="channels-cards-grid" class="channels-cards-grid">
-            <!-- Dynamically populated with YouTube channel cards -->
-          </div>
-
-          <!-- Quick-Add Popular Creators Shelf -->
-          <div class="popular-channels-shelf" id="popular-channels-shelf">
-            <div class="popular-shelf-header">
-              <div>
-                <h4 style="margin: 0; font-size: 1.05rem;">Popular Intentional Creators</h4>
-                <span style="font-size: 0.85rem; color: var(--brand-text-muted);">1-Click Add via Backend (Shorts Excluded)</span>
-              </div>
-            </div>
-            <div id="popular-channels-chips" class="popular-channels-chips">
-              <!-- Dynamically populated with popular channel chips -->
+              <div class="yt-up-next-list" id="up-next-list"></div>
             </div>
           </div>
         </div>
@@ -411,21 +329,21 @@
 
 
       <!-- ========================================================
-           STAGE 4: ASK STUDY HOURS (TRIGGERED AFTER BREAK)
+           STAGE 4: STUDY TIME SELECTION
            ======================================================== -->
       <section class="flow-card stage-section" id="stage-ask-study" style="display: none;">
         <div class="flow-card-header">
-          <div class="step-badge">STAGE 4</div>
-          <h2 class="flow-title">Break is Over! How many hours will you study?</h2>
+          <span class="step-badge">Stage 4</span>
+          <h2 class="flow-title">Study Duration</h2>
         </div>
         <p class="flow-desc">
-          Rest time has concluded. Choose how many hours you will study, then FocusLoop will lock YouTube and close the entertainment app.
+          Break completed. Choose how long you will study before entertainment unlocks again.
         </p>
 
         <div class="study-hours-container">
           <div class="study-input-row">
-            <label for="study-task-input" class="input-label">What are you studying?</label>
-            <input type="text" id="study-task-input" class="brand-input" placeholder="e.g. Mathematics, Programming, Exam preparation" value="Deep Study Session">
+            <label for="study-task-input" class="input-label">Task or Subject:</label>
+            <input type="text" id="study-task-input" class="brand-input" placeholder="e.g. Reading, Programming, Math" value="Study Session">
           </div>
 
           <div class="study-hours-presets">
@@ -433,34 +351,27 @@
             <div class="hours-pills-row" id="study-hours-pills">
               <button type="button" class="hour-choice-pill" data-hours="1">
                 <span class="hour-title">1 Hour</span>
-                <span class="hour-sub">60 min focus</span>
               </button>
               <button type="button" class="hour-choice-pill active" data-hours="2">
                 <span class="hour-title">2 Hours</span>
-                <span class="hour-sub">120 min focus</span>
               </button>
               <button type="button" class="hour-choice-pill" data-hours="3">
                 <span class="hour-title">3 Hours</span>
-                <span class="hour-sub">180 min deep block</span>
               </button>
               <button type="button" class="hour-choice-pill" data-hours="4">
                 <span class="hour-title">4 Hours</span>
-                <span class="hour-sub">Extended study</span>
               </button>
             </div>
           </div>
 
           <div class="custom-study-row">
-            <label for="study-custom-hours" class="subrow-label">Or custom hours / minutes:</label>
-            <div style="display: flex; gap: 8px; align-items: center;">
-              <input type="number" id="study-custom-hours" class="brand-input brand-input-sm" min="0.5" max="12" step="0.5" placeholder="2" value="2">
-              <span style="font-weight: 700; font-size: 0.9rem;">hours</span>
-            </div>
+            <label for="study-custom-hours" class="subrow-label">Custom hours:</label>
+            <input type="number" id="study-custom-hours" class="brand-input brand-input-sm" min="0.5" max="12" step="0.5" value="2">
           </div>
 
           <div class="stage-action-bar">
-            <button id="btn-lock-and-close" class="pill-btn pill-btn-lg">
-              Lock YouTube & Close App 🔒
+            <button id="btn-lock-and-close" class="pill-btn pill-btn-lg" type="button">
+              Lock for Study
             </button>
           </div>
         </div>
@@ -468,61 +379,48 @@
 
 
       <!-- ========================================================
-           STAGE 5: APP CLOSED / YOUTUBE LOCKED OVERLAY
+           STAGE 5: LOCKED STUDY SESSION
            ======================================================== -->
       <section class="flow-card stage-section locked-stage-card" id="stage-app-locked" style="display: none;">
-        <div class="locked-icon-emblem">🔒</div>
-        <h2 class="locked-hero-title">YouTube is Locked for Study</h2>
+        <h2 class="locked-hero-title">Study Session Active</h2>
         <div class="locked-status-pill">
-          <span>● Shield Active • Entertainment Quarantined</span>
+          <span>Entertainment Locked</span>
         </div>
 
         <p class="locked-hero-sub" id="locked-task-notice">
-          FocusLoop has closed YouTube access. Go focus on your study block!
+          Focus on your study block. YouTube remains locked until the timer ends.
         </p>
 
-        <!-- Big Countdown Clock -->
         <div class="locked-countdown-box">
-          <span class="locked-clock-label">Time Remaining in Study Session</span>
+          <span class="locked-clock-label">Time Remaining</span>
           <div class="locked-clock-digits" id="locked-clock-digits">02:00:00</div>
         </div>
 
         <div class="locked-test-row">
-          <button id="btn-test-locked-youtube" class="pill-btn pill-btn-outline">
-            Simulate Temptation (Test Lock Defense)
+          <button id="btn-test-locked-youtube" class="pill-btn pill-btn-outline" type="button">
+            Simulate Temptation
           </button>
-          <button id="btn-end-study-lock" class="pill-btn pill-btn-sm pill-btn-outline">
-            Emergency Session End
+          <button id="btn-end-study-lock" class="pill-btn pill-btn-sm pill-btn-outline" type="button">
+            End Session
           </button>
         </div>
       </section>
 
-
-      <!-- ========================================================
-           SUBTLE TELEMETRY FOOTER BAR
-           ======================================================== -->
+      <!-- Minimal Telemetry Footer -->
       <footer class="flow-footer-summary">
         <div class="footer-stats-group">
           <span class="footer-stat-item">
-            <strong>Temptations Blocked:</strong> <span id="num-yt-focus">17</span>
+            <strong>Shorts Filtered:</strong> <span id="num-shorts-blocked">0</span>
           </span>
-          <span class="stat-separator">•</span>
+          <span class="stat-separator">/</span>
           <span class="footer-stat-item">
-            <strong>Shorts Intercepted:</strong> <span id="num-shorts-blocked">91</span>
-          </span>
-          <span class="stat-separator">•</span>
-          <span class="footer-stat-item">
-            <strong>Discipline:</strong> <span id="num-breaks-completed">21 / 24</span>
-          </span>
-          <span class="stat-separator">•</span>
-          <span class="footer-stat-item">
-            <strong>Avg Break:</strong> <span id="num-avg-break">17.1m</span>
+            <strong>Sessions Honored:</strong> <span id="num-breaks-completed">0</span>
           </span>
         </div>
 
         <div class="footer-btn-group">
-          <button class="pill-btn pill-btn-sm pill-btn-outline" id="btn-view-analytics-modal">
-            Attention Report ↗
+          <button class="pill-btn pill-btn-sm pill-btn-outline" id="btn-view-analytics-modal" type="button">
+            Report
           </button>
         </div>
       </footer>
@@ -530,187 +428,143 @@
     </div>
   </main>
 
+  <!-- Mobile Bottom Navigation Bar -->
+  <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
+    <button type="button" class="mobile-nav-item active" id="mob-nav-watch">
+      <span class="mobile-nav-label">Watch</span>
+    </button>
+    <button type="button" class="mobile-nav-item" id="mob-nav-saved">
+      <span class="mobile-nav-label">Saved</span>
+    </button>
+    <button type="button" class="mobile-nav-item" id="mob-nav-channels">
+      <span class="mobile-nav-label">Channels</span>
+    </button>
+  </nav>
+
   <!-- ========================================================
        MODAL: CONNECT ACCOUNT
        ======================================================== -->
   <div id="modal-connect-account" class="modal-backdrop">
     <div class="modal-sheet">
       <div class="modal-header-row">
-        <h3>Connect YouTube & Google</h3>
-        <button class="modal-close-btn" id="btn-close-connect-modal">&times;</button>
+        <h3>Connect Account</h3>
+        <button class="modal-close-btn" id="btn-close-connect-modal" type="button">&times;</button>
       </div>
 
       <div class="modal-content-body">
-        <p style="font-size: 0.95rem; color: var(--brand-text-muted); margin-bottom: 20px;">
-          Connect your account so FocusLoop can enforce study boundaries and quarantine infinite-scroll Shorts.
-        </p>
-
         <div class="connect-form-group">
-          <label for="connect-email-input" class="input-label">Google / YouTube Email:</label>
-          <input type="email" id="connect-email-input" class="brand-input" placeholder="e.g. student@gmail.com" value="student@gmail.com">
-        </div>
-
-        <div style="margin-top: 14px; margin-bottom: 20px;">
-          <span class="input-label" style="font-size: 0.82rem;">Quick demo profile:</span>
-          <div style="display: flex; gap: 8px; margin-top: 6px;">
-            <button type="button" class="pill-btn pill-btn-sm pill-btn-outline" id="btn-preset-email-1">student@gmail.com</button>
-            <button type="button" class="pill-btn pill-btn-sm pill-btn-outline" id="btn-preset-email-2">focus.engineer@gmail.com</button>
-          </div>
-        </div>
-
-        <div class="connect-rules-card">
-          <strong style="font-size: 0.9rem;">Boundary Enforcements:</strong>
-          <ul style="font-size: 0.85rem; color: var(--brand-text-muted); margin-top: 8px; padding-left: 20px; line-height: 1.6;">
-            <li>YouTube is locked during study blocks (redirects to defense screen)</li>
-            <li>YouTube Shorts are strictly quarantined during break mode</li>
-          </ul>
+          <label for="connect-email-input" class="input-label">Email Address:</label>
+          <input type="email" id="connect-email-input" class="brand-input" placeholder="student@gmail.com" value="student@gmail.com">
         </div>
       </div>
 
       <div class="modal-footer-row">
-        <button class="pill-btn" id="btn-confirm-connect">Authorize & Connect Account</button>
+        <button class="pill-btn" id="btn-confirm-connect" type="button">Confirm</button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: Interaction Analytics Table -->
-  <div id="modal-analytics" class="modal-backdrop">
-    <div class="modal-sheet">
-      <div class="modal-header-row">
-        <h3>Attention & Friction Report</h3>
-        <button class="modal-close-btn" id="btn-close-analytics">&times;</button>
-      </div>
-
-      <div class="modal-content-body">
-        <p style="font-size: 0.95rem; color: var(--brand-text-muted); margin-bottom: 20px;">
-          Measuring <strong>behavior around the boundary</strong> rather than merely counting passive screen time.
-        </p>
-
-        <table class="minimal-table">
-          <thead>
-            <tr>
-              <th>Metric</th>
-              <th style="text-align: right;">Value</th>
-              <th>Behavioral Meaning</th>
-            </tr>
-          </thead>
-          <tbody id="analytics-tbody">
-            <tr><td>Breaks started</td><td style="text-align: right;" class="bold-val" id="tb-breaks-started">24</td><td>Intentional rest initiated</td></tr>
-            <tr><td>Breaks completed</td><td style="text-align: right;" class="bold-val" id="tb-breaks-completed">21</td><td>Sessions finished cleanly</td></tr>
-            <tr><td>Shorts blocked</td><td style="text-align: right;" class="bold-val" id="tb-shorts-blocked">91</td><td>Autopilot dopamine loops prevented</td></tr>
-            <tr><td>Long videos watched</td><td style="text-align: right;" class="bold-val" id="tb-long-videos">18</td><td>Intentional deep consumption</td></tr>
-            <tr><td>Avg break</td><td style="text-align: right;" class="bold-val" id="tb-avg-break">17.1m</td><td>Real consumption duration</td></tr>
-            <tr><td>Avg planned break</td><td style="text-align: right;" class="bold-val" id="tb-avg-planned">20m</td><td>Committed expectation</td></tr>
-            <tr><td>Break overruns</td><td style="text-align: right;" class="bold-val" id="tb-overruns">3</td><td>Discipline boundary breached</td></tr>
-            <tr><td>YouTube attempts during focus</td><td style="text-align: right;" class="bold-val" id="tb-yt-focus">17</td><td><strong>Temptation metric</strong></td></tr>
-            <tr><td>Focus sessions completed</td><td style="text-align: right;" class="bold-val" id="tb-focus-completed">19</td><td>Deep work blocks honored</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="modal-footer-row">
-        <button class="pill-btn" id="btn-done-analytics">Done</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: Shorts Quarantined Defense Alert -->
-  <div id="modal-shorts-quarantined" class="modal-backdrop">
-    <div class="modal-sheet modal-quarantine-sheet">
-      <div class="modal-header-row">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <span class="quarantine-icon-circle">🚫</span>
-          <h3 style="color: #b91c1c;">YouTube Shorts Quarantined!</h3>
-        </div>
-        <button class="modal-close-btn" id="btn-close-quarantine-modal">&times;</button>
-      </div>
-
-      <div class="modal-content-body">
-        <div class="quarantine-hero-box">
-          <div class="quarantine-shield-badge">🛡️ Boundary Enforced</div>
-          <p class="quarantine-main-msg">
-            FocusLoop strictly intercepts <strong>/shorts/*</strong> navigation and short-form infinite reels.
-          </p>
-          <div class="quarantine-url-pill" id="quarantine-intercepted-url">
-            youtube.com/shorts/...
-          </div>
-        </div>
-
-        <div class="quarantine-reasons-card">
-          <strong>Why is this blocked during your break?</strong>
-          <ul class="quarantine-reasons-list">
-            <li><strong>Dopamine hijacking:</strong> Shorts are engineered for frictionless, infinite autopilot scrolling that overruns planned breaks.</li>
-            <li><strong>Intentional entertainment only:</strong> Your break allows full-length documentary, educational, music, and deep video essays.</li>
-            <li><strong>Telemetry logged:</strong> This interception has been recorded in your attention report to measure declining impulse dependency.</li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="modal-footer-row quarantine-footer-actions">
-        <button class="pill-btn pill-btn-outline" id="btn-quarantine-surprise">
-          🎲 Play a Long-Form Video Instead
-        </button>
-        <button class="pill-btn pill-btn-quarantine-dismiss" id="btn-dismiss-quarantine">
-          Return to YouTube Feed 🌿
-        </button>
-      </div>
   <!-- ========================================================
-       MODAL: ADD YOUTUBE CHANNEL (BACKEND INGESTION)
+       MODAL: ADD YOUTUBE CHANNEL
        ======================================================== -->
   <div id="modal-add-channel" class="modal-backdrop">
     <div class="modal-sheet">
       <div class="modal-header-row">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <span style="font-size: 1.4rem;">📺</span>
-          <h3>Add YouTube Channel to Backend</h3>
-        </div>
-        <button class="modal-close-btn" id="btn-close-add-channel-modal">&times;</button>
+        <h3>Add YouTube Channel</h3>
+        <button class="modal-close-btn" id="btn-close-add-channel-modal" type="button">&times;</button>
       </div>
 
       <div class="modal-content-body">
-        <p style="font-size: 0.92rem; color: var(--brand-text-muted); margin-bottom: 16px;">
-          Add any channel to your library using its link, <code>@handle</code>, or name. FocusLoop's backend engine will import all their uploads and <strong>strictly exclude every short video</strong>.
-        </p>
-
         <div class="connect-form-group">
           <label for="input-channel-query" class="input-label">Channel Handle, URL, or Name:</label>
           <input 
             type="text" 
             id="input-channel-query" 
             class="brand-input" 
-            placeholder="e.g. @veritasium, @DonkeyTube, https://youtube.com/@3blue1brown"
+            placeholder="e.g. @veritasium, @DonkeyTube, @3blue1brown"
             autocomplete="off"
           >
         </div>
 
-        <div style="margin-top: 14px; margin-bottom: 18px;">
-          <span class="input-label" style="font-size: 0.82rem;">Quick Suggestions:</span>
-          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px;" id="add-channel-suggestions">
+        <div style="margin-top: 14px; margin-bottom: 14px;">
+          <span class="input-label" style="font-size: 0.8rem;">Suggestions:</span>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px;">
             <button type="button" class="pill-btn pill-btn-sm pill-btn-outline btn-suggest-handle" data-handle="@veritasium">@veritasium</button>
             <button type="button" class="pill-btn pill-btn-sm pill-btn-outline btn-suggest-handle" data-handle="Donkey Tube">Donkey Tube</button>
             <button type="button" class="pill-btn pill-btn-sm pill-btn-outline btn-suggest-handle" data-handle="@3blue1brown">@3blue1brown</button>
             <button type="button" class="pill-btn pill-btn-sm pill-btn-outline btn-suggest-handle" data-handle="@kurzgesagt">@kurzgesagt</button>
-            <button type="button" class="pill-btn pill-btn-sm pill-btn-outline btn-suggest-handle" data-handle="@HubermanLab">@HubermanLab</button>
-            <button type="button" class="pill-btn pill-btn-sm pill-btn-outline btn-suggest-handle" data-handle="@greatartexplained">@greatartexplained</button>
           </div>
         </div>
 
-        <div class="connect-rules-card">
-          <strong style="font-size: 0.88rem; color: #166534;">🛡️ Shorts Quarantine Policy:</strong>
-          <ul style="font-size: 0.82rem; color: var(--brand-text-muted); margin-top: 6px; padding-left: 18px; line-height: 1.5;">
-            <li>Videos &le; 60 seconds are strictly rejected.</li>
-            <li>Reels and <code>#shorts</code> tags are quarantined and excluded.</li>
-            <li>Only intentional long-form videos will be added to your feed.</li>
-          </ul>
-        </div>
-
-        <div id="add-channel-feedback" style="display: none; margin-top: 14px; padding: 12px; border-radius: 8px; font-size: 0.88rem;"></div>
+        <div id="add-channel-feedback" style="display: none; margin-top: 10px; padding: 10px; border-radius: 6px; font-size: 0.85rem;"></div>
       </div>
 
       <div class="modal-footer-row">
         <button class="pill-btn pill-btn-outline" id="btn-cancel-add-channel" type="button">Cancel</button>
         <button class="pill-btn" id="btn-submit-add-channel" type="button">
-          Import Channel & Strip Shorts 🚀
+          Import Channel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL: ANALYTICS REPORT
+       ======================================================== -->
+  <div id="modal-analytics" class="modal-backdrop">
+    <div class="modal-sheet">
+      <div class="modal-header-row">
+        <h3>Session Report</h3>
+        <button class="modal-close-btn" id="btn-close-analytics" type="button">&times;</button>
+      </div>
+
+      <div class="modal-content-body">
+        <table class="minimal-table">
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th style="text-align: right;">Count</th>
+            </tr>
+          </thead>
+          <tbody id="analytics-tbody">
+            <tr><td>Breaks started</td><td style="text-align: right;" id="tb-breaks-started">0</td></tr>
+            <tr><td>Breaks completed</td><td style="text-align: right;" id="tb-breaks-completed">0</td></tr>
+            <tr><td>Shorts filtered</td><td style="text-align: right;" id="tb-shorts-blocked">0</td></tr>
+            <tr><td>Videos watched</td><td style="text-align: right;" id="tb-long-videos">0</td></tr>
+            <tr><td>Average break</td><td style="text-align: right;" id="tb-avg-break">0m</td></tr>
+            <tr><td>Focus blocks completed</td><td style="text-align: right;" id="tb-focus-completed">0</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="modal-footer-row">
+        <button class="pill-btn" id="btn-done-analytics" type="button">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL: SHORTS QUARANTINED DEFENSE
+       ======================================================== -->
+  <div id="modal-shorts-quarantined" class="modal-backdrop">
+    <div class="modal-sheet">
+      <div class="modal-header-row">
+        <h3>Shorts Excluded</h3>
+        <button class="modal-close-btn" id="btn-close-quarantine-modal" type="button">&times;</button>
+      </div>
+
+      <div class="modal-content-body">
+        <p style="font-size: 0.95rem; margin-bottom: 14px;">
+          Short videos and reels are quarantined. FocusLoop allows long-form videos only.
+        </p>
+        <div class="quarantine-url-pill" id="quarantine-intercepted-url">
+          youtube.com/shorts/...
+        </div>
+      </div>
+
+      <div class="modal-footer-row">
+        <button class="pill-btn" id="btn-dismiss-quarantine" type="button">
+          Return to Videos
         </button>
       </div>
     </div>
@@ -719,10 +573,10 @@
   <!-- Toast Notification -->
   <div id="brand-toast" class="brand-toast">
     <div class="toast-copy">
-      <strong id="toast-heading">Boundary Enforced</strong>
-      <p id="toast-text">YouTube is locked during focus mode.</p>
+      <strong id="toast-heading">Notice</strong>
+      <p id="toast-text"></p>
     </div>
-    <button class="toast-close-x" id="btn-toast-close">&times;</button>
+    <button class="toast-close-x" id="btn-toast-close" type="button">&times;</button>
   </div>
 
   <script src="/static/js/app.js"></script>

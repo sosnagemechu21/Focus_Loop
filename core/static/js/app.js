@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (toastHeading) toastHeading.textContent = heading;
     if (toastText) toastText.textContent = text;
     if (brandToast) {
-      brandToast.style.borderColor = isWarning ? '#ef4444' : 'var(--brand-dark)';
+      brandToast.style.borderColor = 'var(--brand-dark)';
       brandToast.classList.add('show');
       setTimeout(() => brandToast.classList.remove('show'), 4200);
     }
@@ -157,11 +157,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Header Action Button Text
     const headerStatusBtn = document.getElementById('header-status-btn');
     if (headerStatusBtn) {
-      if (num === 1) headerStatusBtn.textContent = '1. Connect 🔑';
-      else if (num === 2) headerStatusBtn.textContent = '2. Choose Break 🌿';
-      else if (num === 3) headerStatusBtn.textContent = '3. Break Active 🌿';
-      else if (num === 4) headerStatusBtn.textContent = '4. Set Study 🔒';
-      else if (num === 5) headerStatusBtn.textContent = 'Study Locked 🔒';
+      if (num === 1) headerStatusBtn.textContent = '1. Connect';
+      else if (num === 2) headerStatusBtn.textContent = '2. Break';
+      else if (num === 3) headerStatusBtn.textContent = '3. Watch';
+      else if (num === 4) headerStatusBtn.textContent = '4. Study';
+      else if (num === 5) headerStatusBtn.textContent = 'Study Active';
     }
   }
 
@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     modalConnectAccount?.classList.remove('open');
     playTone(587.33, 'sine', 0.2);
-    showToast('Account Connected ✓', `Linked with ${email}. Proceeding to choose break time.`);
+    showToast('Account Connected', `Linked with ${email}. Proceeding to break time.`);
 
     // Automatically transition to Stage 2
     setTimeout(() => goToStage(2), 600);
@@ -284,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       state.remainingSeconds = mins * 60;
       playChimeStart();
-      showToast('YouTube Break Unlocked 🌿', `${mins} min break started. Shorts are quarantined!`);
+      showToast('Break Started', `${mins} min break started. Shorts excluded.`);
       refreshAnalytics();
 
       // Launch Stage 3 (Directly YouTube Page)
@@ -351,6 +351,34 @@ document.addEventListener('DOMContentLoaded', () => {
   const popularChannelsChips = document.getElementById('popular-channels-chips');
   const btnChannelsAddNew = document.getElementById('btn-channels-add-new');
   const btnOpenAddChannelModal = document.getElementById('btn-open-add-channel-modal');
+
+  
+  // Mobile Bottom Nav Sync
+  const mobNavWatch = document.getElementById('mob-nav-watch');
+  const mobNavSaved = document.getElementById('mob-nav-saved');
+  const mobNavChannels = document.getElementById('mob-nav-channels');
+
+  function updateMobileNavUI() {
+    [mobNavWatch, mobNavSaved, mobNavChannels].forEach(m => m?.classList.remove('active'));
+    if (currentActiveTab === 'home') mobNavWatch?.classList.add('active');
+    else if (currentActiveTab === 'saved') mobNavSaved?.classList.add('active');
+    else if (currentActiveTab === 'channels') mobNavChannels?.classList.add('active');
+  }
+
+  mobNavWatch?.addEventListener('click', () => {
+    if (state.currentStage !== 3) goToStage(3);
+    tabHome?.click();
+  });
+
+  mobNavSaved?.addEventListener('click', () => {
+    if (state.currentStage !== 3) goToStage(3);
+    tabSaved?.click();
+  });
+
+  mobNavChannels?.addEventListener('click', () => {
+    if (state.currentStage !== 3) goToStage(3);
+    tabChannels?.click();
+  });
 
   // Add Channel Modal Elements
   const modalAddChannel = document.getElementById('modal-add-channel');
@@ -445,7 +473,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function finishBreakAndAskStudy() {
     closeInlinePlayer();
     playAlertBreakEnd();
-    showToast('Break Completed 🔔', 'Time to choose your study hours and lock YouTube.');
+    showToast('Break Completed', 'Select study duration to begin.');
     goToStage(4);
   }
 
@@ -480,7 +508,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.debug('Failed to log shorts telemetry:', e);
     }
 
-    showToast('❌ Shorts Quarantined!', 'Shorts loop intercepted. Only intentional long-form is allowed.', true);
+    showToast('Shorts Quarantined', 'Shorts excluded. Only long-form videos allowed.', true);
   }
 
   // Test Shorts Defense Button
@@ -522,7 +550,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (query && videoCardsGrid) {
         videoCardsGrid.innerHTML = `
           <div style="grid-column: 1 / -1; padding: 48px 20px; text-align: center; color: var(--brand-text-muted);">
-            <div style="font-size: 2.2rem; margin-bottom: 12px;">⏳</div>
+            
             <strong style="display: block; font-size: 1.1rem; color: var(--brand-dark); margin-bottom: 6px;">
               Searching YouTube for "${query}"...
             </strong>
@@ -588,14 +616,14 @@ document.addEventListener('DOMContentLoaded', () => {
             Reset All Filters
           </button>
           <button type="button" class="pill-btn" id="btn-search-channels-tab" style="background: var(--brand-dark); color: var(--brand-canvas);">
-            📺 Browse All Channels
+            Browse Channels
           </button>
         </div>
       `;
 
       videoCardsGrid.innerHTML = `
         <div style="grid-column: 1 / -1; padding: 48px 20px; text-align: center; color: var(--brand-text-muted);">
-          <div style="font-size: 2.2rem; margin-bottom: 10px;">🔍</div>
+          
           <strong style="display: block; font-size: 1.1rem; color: var(--brand-dark); margin-bottom: 6px;">
             ${currentSearchQuery ? `No cached long-form videos found for "${currentSearchQuery}"` : 'No long-form videos found'}
           </strong>
@@ -653,7 +681,7 @@ document.addEventListener('DOMContentLoaded', () => {
           >
           <span class="yt-thumb-duration">${duration}</span>
           <div class="yt-thumb-play-overlay">
-            <span class="yt-play-chip">▶ Watch</span>
+            <span class="yt-play-chip">Watch</span>
           </div>
         </div>
 
@@ -663,7 +691,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <h4 class="yt-card-title" title="${v.title}">${v.title}</h4>
             <div class="yt-card-channel">
               <span>${channel}</span>
-              <span class="yt-card-verified-check" title="Verified Intentional Creator">✓</span>
+              <span class="yt-card-verified-check">Verified</span>
             </div>
             <div class="yt-card-subline">
               <span class="yt-card-cat-pill">${v.category || 'Curated'}</span>
@@ -675,9 +703,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <div class="yt-card-footer">
           <button type="button" class="yt-card-save-btn ${isSaved ? 'saved' : ''}" data-id="${v.id}" title="Save to queue">
-            ${isSaved ? '★ Saved' : '☆ Save to Queue'}
+            ${isSaved ? 'Saved' : 'Save'}
           </button>
-          <button type="button" class="pill-btn pill-btn-sm btn-play-card">Watch Now ↗</button>
+          <button type="button" class="pill-btn pill-btn-sm btn-play-card">Watch</button>
         </div>
       `;
 
@@ -737,12 +765,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update Save button state
     if (btnWatchSave) {
-      btnWatchSave.textContent = video.is_saved ? '★ Saved in Queue' : '★ Save to Queue';
+      btnWatchSave.textContent = video.is_saved ? 'Saved' : 'Save Video';
       btnWatchSave.onclick = async () => {
         if (video.id) {
           await toggleSaveVideo(video.id);
           video.is_saved = !video.is_saved;
-          btnWatchSave.textContent = video.is_saved ? '★ Saved in Queue' : '★ Save to Queue';
+          btnWatchSave.textContent = video.is_saved ? 'Saved' : 'Save Video';
         }
       };
     }
@@ -818,7 +846,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (state.activeVideo) {
       const url = `https://www.youtube.com/watch?v=${state.activeVideo.youtube_id}`;
       navigator.clipboard.writeText(url).then(() => {
-        showToast('Link Copied 🔗', 'YouTube video URL copied to clipboard.');
+        showToast('Link Copied', 'Video URL copied to clipboard.');
       });
     }
   });
@@ -833,11 +861,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnEl) {
           if (isNowSaved) {
             btnEl.classList.add('saved');
-            btnEl.textContent = '★ Saved';
-            showToast('Video Saved ★', 'Added to your Intentional Saved Queue.');
+            btnEl.textContent = 'Saved';
+            showToast('Video Saved', 'Added to your Saved list.');
           } else {
             btnEl.classList.remove('saved');
-            btnEl.textContent = '☆ Save to Queue';
+            btnEl.textContent = 'Save';
             showToast('Video Removed', 'Removed from your Saved Queue.');
           }
         }
@@ -911,7 +939,7 @@ document.addEventListener('DOMContentLoaded', () => {
             youtube_id: data.video_id,
             description: data.description
           });
-          showToast('Long-Form Loaded 🌿', 'Playing distraction-free. Shorts stripped.');
+          showToast('Video Loaded', 'Playing long-form content.');
           return;
         } else {
           showToast('Invalid URL', data.message || 'Please check the YouTube link.', true);
@@ -944,6 +972,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Tab Switching Helper
   function updateActiveTabUI() {
+    updateMobileNavUI();
     [tabHome, tabChannels, tabSaved, tabHistory].forEach(t => t?.classList.remove('active'));
     if (currentActiveTab === 'home') tabHome?.classList.add('active');
     else if (currentActiveTab === 'channels') tabChannels?.classList.add('active');
@@ -996,7 +1025,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!channelsCardsGrid) return;
     channelsCardsGrid.innerHTML = `
       <div style="grid-column: 1 / -1; padding: 40px 20px; text-align: center; color: var(--brand-text-muted);">
-        <div style="font-size: 2rem; margin-bottom: 8px;">⏳</div>
+        
         <strong>Loading your subscribed YouTube channels...</strong>
       </div>
     `;
@@ -1032,7 +1061,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!channels.length) {
       channelsCardsGrid.innerHTML = `
         <div style="grid-column: 1 / -1; padding: 48px 20px; text-align: center; color: var(--brand-text-muted);">
-          <div style="font-size: 2.2rem; margin-bottom: 10px;">📺</div>
+          
           <strong style="display: block; font-size: 1.15rem; color: var(--brand-dark); margin-bottom: 6px;">
             No YouTube Channels Added Yet
           </strong>
@@ -1040,7 +1069,7 @@ document.addEventListener('DOMContentLoaded', () => {
             Add any YouTube creator by handle, URL, or name. All their long-form uploads will be synced while Shorts are strictly quarantined.
           </span>
           <button type="button" class="pill-btn" id="btn-empty-add-channel" style="background: var(--brand-dark); color: var(--brand-canvas);">
-            ➕ Add Your First Channel
+            Add Channel
           </button>
         </div>
       `;
@@ -1067,7 +1096,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <p class="channel-card-desc">${ch.description || 'Verified intentional creator synced to your FocusLoop library.'}</p>
           <div class="channel-card-stats">
             <span class="channel-longform-badge">
-              🛡️ ${ch.video_count} Long-Form Videos
+              ${ch.video_count} Long-Form Videos
             </span>
             <span style="font-size: 0.78rem; opacity: 0.75;">Zero Shorts</span>
           </div>
@@ -1075,10 +1104,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <div class="channel-card-actions">
           <button type="button" class="pill-btn pill-btn-sm btn-channel-browse" data-id="${ch.id}">
-            Browse Videos ↗
+            Browse Videos
           </button>
           <button type="button" class="btn-channel-remove" data-id="${ch.id}" data-name="${ch.name}" title="Remove channel">
-            ✕
+            Remove
           </button>
         </div>
       `;
@@ -1106,7 +1135,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!channelVideosGrid) return;
     channelVideosGrid.innerHTML = `
       <div style="grid-column: 1 / -1; padding: 40px 20px; text-align: center; color: var(--brand-text-muted);">
-        <div style="font-size: 2rem; margin-bottom: 8px;">⏳</div>
+        
         <strong>Loading long-form videos for this creator...</strong>
       </div>
     `;
@@ -1159,7 +1188,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!videos.length) {
       channelVideosGrid.innerHTML = `
         <div style="grid-column: 1 / -1; padding: 48px 20px; text-align: center; color: var(--brand-text-muted);">
-          <div style="font-size: 2rem; margin-bottom: 8px;">🛡️</div>
+          
           <strong>No long-form videos currently indexed for ${channelName}.</strong>
           <p style="font-size: 0.88rem; margin-top: 6px;">All Shorts on this channel were quarantined. You can trigger an import with higher limits.</p>
         </div>
@@ -1186,7 +1215,7 @@ document.addEventListener('DOMContentLoaded', () => {
           >
           <span class="yt-thumb-duration">${duration}</span>
           <div class="yt-thumb-play-overlay">
-            <span class="yt-play-chip">▶ Watch</span>
+            <span class="yt-play-chip">Watch</span>
           </div>
         </div>
 
@@ -1196,7 +1225,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <h4 class="yt-card-title" title="${v.title}">${v.title}</h4>
             <div class="yt-card-channel">
               <span>${channelName}</span>
-              <span class="yt-card-verified-check" title="Verified Creator">✓</span>
+              <span class="yt-card-verified-check">Verified</span>
             </div>
             <div class="yt-card-subline">
               <span class="yt-card-cat-pill">${v.category || 'YouTube'}</span>
@@ -1208,9 +1237,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <div class="yt-card-footer">
           <button type="button" class="yt-card-save-btn ${isSaved ? 'saved' : ''}" data-id="${v.id}" title="Save to queue">
-            ${isSaved ? '★ Saved' : '☆ Save to Queue'}
+            ${isSaved ? 'Saved' : 'Save'}
           </button>
-          <button type="button" class="pill-btn pill-btn-sm btn-play-card">Watch Now ↗</button>
+          <button type="button" class="pill-btn pill-btn-sm btn-play-card">Watch</button>
         </div>
       `;
 
@@ -1265,7 +1294,7 @@ document.addEventListener('DOMContentLoaded', () => {
         chip.innerHTML = `
           <img src="${p.avatar}" alt="${p.name}" class="popular-chip-avatar">
           <span>${p.name}</span>
-          <span class="popular-chip-add">➕</span>
+          <span class="popular-chip-add">+</span>
         `;
         chip.addEventListener('click', async () => {
           chip.disabled = true;
@@ -1279,7 +1308,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const addData = await addRes.json();
             if (addData.status === 'ok') {
-              showToast('Channel Added! 🚀', `Added ${p.name} (${addData.imported_count} videos, ${addData.shorts_excluded} shorts quarantined)`);
+              showToast('Channel Added', `Added ${p.name} (${addData.imported_count} videos synced)`);
               loadChannels();
               updateChannelsCount();
             } else {
@@ -1315,6 +1344,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   btnOpenAddChannelModal?.addEventListener('click', () => openAddChannelModal());
+  // Top Add Channel Button
+  const btnOpenAddChannelTop = document.getElementById('btn-open-add-channel-top');
+  btnOpenAddChannelTop?.addEventListener('click', () => openAddChannelModal());
+
   btnChannelsAddNew?.addEventListener('click', () => openAddChannelModal());
   btnCloseAddChannelModal?.addEventListener('click', closeAddChannelModal);
   btnCancelAddChannel?.addEventListener('click', closeAddChannelModal);
@@ -1346,8 +1379,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!raw) {
       if (addChannelFeedback) {
         addChannelFeedback.style.display = 'block';
-        addChannelFeedback.style.backgroundColor = '#fef2f2';
-        addChannelFeedback.style.color = '#dc2626';
+        addChannelFeedback.style.backgroundColor = 'var(--brand-card)';
+        addChannelFeedback.style.color = 'var(--brand-dark)';
         addChannelFeedback.textContent = 'Please enter a channel handle, URL, or name.';
       }
       return;
@@ -1355,15 +1388,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnSubmitAddChannel) {
       btnSubmitAddChannel.disabled = true;
-      btnSubmitAddChannel.textContent = 'Ingesting & Stripping Shorts ⏳...';
+      btnSubmitAddChannel.textContent = 'Importing Channel...';
     }
 
     if (addChannelFeedback) {
       addChannelFeedback.style.display = 'block';
-      addChannelFeedback.style.backgroundColor = '#f0fdf4';
-      addChannelFeedback.style.color = '#166534';
+      addChannelFeedback.style.backgroundColor = 'var(--brand-card)';
+      addChannelFeedback.style.color = 'var(--brand-dark)';
       addChannelFeedback.innerHTML = `
-        <strong>🔍 Contacting backend engine...</strong><br>
+        <strong>Importing channel...</strong><br>
         Scanning uploads for "${raw}", checking durations, and strictly quarantining Shorts.
       `;
     }
@@ -1377,7 +1410,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json();
 
       if (data.status === 'ok') {
-        showToast('Channel Ingested! 🚀', `${data.channel.name}: ${data.imported_count} long-form videos imported. ${data.shorts_excluded} Shorts quarantined.`);
+        showToast('Channel Added', `${data.channel.name}: ${data.imported_count} long-form videos imported.`);
         closeAddChannelModal();
         updateChannelsCount();
 
@@ -1389,22 +1422,22 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         if (addChannelFeedback) {
           addChannelFeedback.style.display = 'block';
-          addChannelFeedback.style.backgroundColor = '#fef2f2';
-          addChannelFeedback.style.color = '#dc2626';
+          addChannelFeedback.style.backgroundColor = 'var(--brand-card)';
+          addChannelFeedback.style.color = 'var(--brand-dark)';
           addChannelFeedback.textContent = data.message || 'Failed to add channel. Please check the handle or name.';
         }
       }
     } catch (err) {
       if (addChannelFeedback) {
         addChannelFeedback.style.display = 'block';
-        addChannelFeedback.style.backgroundColor = '#fef2f2';
-        addChannelFeedback.style.color = '#dc2626';
+        addChannelFeedback.style.backgroundColor = 'var(--brand-card)';
+        addChannelFeedback.style.color = 'var(--brand-dark)';
         addChannelFeedback.textContent = 'Network error while contacting backend. Please try again.';
       }
     } finally {
       if (btnSubmitAddChannel) {
         btnSubmitAddChannel.disabled = false;
-        btnSubmitAddChannel.textContent = 'Import Channel & Strip Shorts 🚀';
+        btnSubmitAddChannel.textContent = 'Import Channel';
       }
     }
   }
@@ -1415,7 +1448,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json();
       if (data.video) {
         playVideoInline(data.video);
-        showToast('🎲 Surprise Pick!', `Now Playing: "${data.video.title}"`);
+        showToast('Random Pick', `Now Playing: "${data.video.title}"`);
       }
     } catch (e) {
       console.debug('Surprise pick error:', e);
@@ -1486,7 +1519,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       playTone(440, 'triangle', 0.4);
-      showToast('YouTube Locked 🔒', `Locked for ${hours} hours. Go focus on "${task}"!`);
+      showToast('Session Locked', `Locked for ${hours} hours for "${task}".`);
       refreshAnalytics();
 
       // Launch Stage 5 (App Closed & Locked)
@@ -1553,7 +1586,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (lockedClockDigits) lockedClockDigits.textContent = formatHoursClock(state.remainingSeconds);
           if (state.remainingSeconds <= 0) {
             playChimeStart();
-            showToast('Study Session Completed! 🎉', 'You have honored your study boundary.');
+            showToast('Session Completed', 'Study session finished.');
             goToStage(2);
           }
         }
@@ -1612,6 +1645,44 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       goToStage(state.currentStage);
     }
+  });
+
+  
+  // ========================================================
+  // PWA & Service Worker Registration
+  // ========================================================
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/static/sw.js')
+        .then(reg => console.log('FocusLoop Service Worker registered:', reg.scope))
+        .catch(err => console.debug('Service Worker registration skipped:', err));
+    });
+  }
+
+  let deferredInstallPrompt = null;
+  const btnInstallPwa = document.getElementById('btn-install-pwa');
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    if (btnInstallPwa) btnInstallPwa.style.display = 'inline-block';
+  });
+
+  btnInstallPwa?.addEventListener('click', async () => {
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+      const { outcome } = await deferredInstallPrompt.userChoice;
+      if (outcome === 'accepted') {
+        showToast('App Installed', 'FocusLoop added to your home screen.');
+      }
+      deferredInstallPrompt = null;
+      btnInstallPwa.style.display = 'none';
+    }
+  });
+
+  window.addEventListener('appinstalled', () => {
+    if (btnInstallPwa) btnInstallPwa.style.display = 'none';
+    showToast('App Ready', 'FocusLoop installed as an app.');
   });
 
   // Initial Boot

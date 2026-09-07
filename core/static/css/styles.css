@@ -399,7 +399,7 @@ body {
 }
 
 .yt-hud-pulse {
-  color: #22c55e;
+  color: rgba(255, 255, 255, 0.9);
   font-size: 1.2rem;
   animation: hudPulse 1.8s infinite ease-in-out;
 }
@@ -514,18 +514,18 @@ body {
 }
 
 .yt-btn-open-real {
-  background-color: #cc0000;
+  background-color: var(--brand-dark);
   color: #ffffff;
-  border: 1.5px solid #cc0000;
+  border: 1.5px solid var(--brand-dark);
   font-weight: 800;
   text-decoration: none;
-  box-shadow: 0 2px 10px rgba(204, 0, 0, 0.25);
+  box-shadow: 0 2px 10px rgba(20, 20, 20, 0.15);
   transition: all 0.2s ease;
 }
 
 .yt-btn-open-real:hover {
-  background-color: #b30000;
-  border-color: #b30000;
+  background-color: var(--brand-dark-subtle);
+  border-color: var(--brand-dark-subtle);
   color: #ffffff;
   transform: translateY(-1px);
 }
@@ -561,7 +561,7 @@ body {
 }
 
 .yt-play-icon {
-  color: #ff0000;
+  color: #ffffff;
   font-size: 0.85rem;
   line-height: 1;
 }
@@ -671,13 +671,13 @@ body {
 
 .yt-btn-test-shorts {
   background-color: transparent;
-  color: #b91c1c;
-  border-color: #b91c1c;
+  color: var(--brand-dark);
+  border-color: var(--brand-dark);
   font-weight: 800;
 }
 
 .yt-btn-test-shorts:hover {
-  background-color: #b91c1c;
+  background-color: var(--brand-dark);
   color: #ffffff;
 }
 
@@ -1269,7 +1269,7 @@ body {
 /* 6. Shorts Quarantined Modal */
 .modal-quarantine-sheet {
   max-width: 540px;
-  border: 2px solid #b91c1c;
+  border: 2px solid var(--brand-dark);
 }
 
 .quarantine-icon-circle {
@@ -1279,14 +1279,15 @@ body {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background-color: #fee2e2;
+  background-color: var(--brand-card-hover);
+  color: var(--brand-dark);
   font-size: 1.1rem;
 }
 
 .quarantine-hero-box {
-  background-color: #fef2f2;
+  background-color: var(--brand-card-hover);
   border-radius: var(--radius-inner);
-  border: 1px solid #fecaca;
+  border: 1px solid var(--brand-dark);
   padding: 18px;
   text-align: center;
   margin-bottom: 16px;
@@ -1294,7 +1295,7 @@ body {
 
 .quarantine-shield-badge {
   display: inline-block;
-  background-color: #b91c1c;
+  background-color: var(--brand-dark);
   color: #ffffff;
   font-size: 0.75rem;
   font-weight: 800;
@@ -1307,7 +1308,7 @@ body {
 
 .quarantine-main-msg {
   font-size: 0.95rem;
-  color: #7f1d1d;
+  color: var(--brand-text);
   line-height: 1.45;
   margin-bottom: 10px;
 }
@@ -1317,11 +1318,11 @@ body {
   font-family: var(--font-mono);
   font-size: 0.8rem;
   font-weight: 700;
-  background-color: #ffffff;
-  color: #991b1b;
+  background-color: var(--brand-card);
+  color: var(--brand-dark);
   padding: 5px 12px;
   border-radius: var(--radius-pill);
-  border: 1px dashed #f87171;
+  border: 1px dashed var(--brand-dark);
   word-break: break-all;
 }
 
@@ -1445,7 +1446,7 @@ body {
 }
 
 .required-indicator {
-  color: #b91c1c;
+  color: var(--brand-dark);
   font-weight: 900;
 }
 
@@ -1615,8 +1616,8 @@ body {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background-color: #10b981;
-  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.3);
+  background-color: var(--brand-dark);
+  box-shadow: 0 0 0 4px rgba(20, 20, 20, 0.2);
   animation: pulse 2s infinite;
 }
 
@@ -2311,9 +2312,9 @@ body {
 }
 
 .btn-channel-remove:hover {
-  background: #fef2f2;
-  color: #dc2626;
-  border-color: #fca5a5;
+  background: var(--brand-dark);
+  color: #ffffff;
+  border-color: var(--brand-dark);
 }
 
 /* Active Channel Focus Banner */
@@ -2343,9 +2344,22 @@ body {
   border: 2px solid var(--brand-dark);
 }
 
+.channel-focus-avatar-fallback {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: var(--brand-dark);
+  color: var(--brand-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.4rem;
+}
+
 .channel-focus-name {
   margin: 0;
-  font-size: 1.3rem;
+  font-size: 1.25rem;
   font-weight: 800;
   color: var(--brand-dark);
 }
@@ -2354,19 +2368,9 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: var(--brand-text-muted);
   margin-top: 4px;
-}
-
-.channel-shield-guarantee {
-  background: rgba(22, 101, 52, 0.12);
-  color: #166534;
-  border: 1px solid rgba(22, 101, 52, 0.3);
-  font-size: 0.82rem;
-  font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 12px;
 }
 
 .channel-banner-right {
@@ -2396,7 +2400,7 @@ body {
   align-items: center;
   gap: 8px;
   background-color: var(--brand-card);
-  border: 1px solid rgba(20, 20, 20, 0.14);
+  border: 1px solid rgba(20, 20, 20, 0.2);
   border-radius: 20px;
   padding: 4px 12px 4px 6px;
   font-size: 0.85rem;
@@ -2408,7 +2412,8 @@ body {
 
 .popular-channel-chip:hover {
   border-color: var(--brand-dark);
-  background-color: var(--brand-card-hover);
+  background-color: var(--brand-dark);
+  color: #ffffff;
   transform: translateY(-1px);
 }
 
@@ -2423,5 +2428,113 @@ body {
   font-size: 0.8rem;
   opacity: 0.7;
   margin-left: 2px;
+}
+
+/* ========================================================
+   MOBILE & PWA PHONE-ADAPTIVE ENHANCEMENTS
+   ======================================================== */
+.brand-nav-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-sub-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background-color: rgba(20, 20, 20, 0.08);
+  border: 1px solid var(--brand-dark);
+  color: var(--brand-dark);
+  letter-spacing: 0.02em;
+}
+
+/* Mobile Bottom Bar for Phone Users */
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 58px;
+  background-color: var(--brand-dark);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 99999;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0 4px;
+}
+
+.mobile-nav-item {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: #a7a094;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: var(--font-sans);
+}
+
+.mobile-nav-item.active {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 768px) {
+  body {
+    padding-bottom: 66px;
+  }
+  .mobile-bottom-nav {
+    display: flex;
+  }
+  .flow-stage-indicator {
+    display: none;
+  }
+  .brand-navbar {
+    padding: 14px 16px;
+  }
+  .page-container {
+    padding: 10px 10px 30px;
+  }
+  .flow-card {
+    padding: 18px 14px;
+    border-radius: 16px;
+  }
+  .yt-navigation-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .yt-nav-tabs {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+  .yt-video-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .channels-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .channel-focus-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .channel-banner-right {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .stage-action-bar button, .stage-action-bar a {
+    width: 100% !important;
+  }
 }
 
