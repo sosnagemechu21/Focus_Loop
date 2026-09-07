@@ -101,7 +101,33 @@ class BoundaryEvent(models.Model):
         return f"[{self.timestamp.strftime('%H:%M:%S')}] {self.get_event_type_display()}"
 
 
+class YouTubeChannel(models.Model):
+    name = models.CharField(max_length=150)
+    handle = models.CharField(max_length=100, blank=True, null=True, unique=True)
+    channel_id = models.CharField(max_length=80, blank=True, null=True, unique=True)
+    custom_url = models.CharField(max_length=255, blank=True, null=True)
+    avatar_url = models.URLField(blank=True, default='')
+    description = models.TextField(blank=True, default='')
+    subscriber_count = models.CharField(max_length=50, blank=True, default='')
+    video_count = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.name} ({self.handle or self.channel_id or 'No Handle'})"
+
+
 class CuratedVideo(models.Model):
+    channel_ref = models.ForeignKey(
+        YouTubeChannel,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='videos'
+    )
     title = models.CharField(max_length=255)
     channel = models.CharField(max_length=120)
     duration_str = models.CharField(max_length=20, default="24m")
@@ -129,3 +155,4 @@ class ProtectedApp(models.Model):
 
     def __str__(self):
         return f"{self.name} ({'Protected' if self.is_enabled else 'Off'})"
+

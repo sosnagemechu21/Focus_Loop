@@ -247,7 +247,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const breakChoicePills = document.querySelectorAll('.break-choice-pill');
   const inputCustomBreak = document.getElementById('input-custom-break');
   const btnLaunchYoutubeBreak = document.getElementById('btn-launch-youtube-break');
-  const btnStage2OpenReal = document.getElementById('btn-stage2-open-real');
 
   breakChoicePills.forEach(pill => {
     pill.addEventListener('click', () => {
@@ -295,26 +294,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  btnStage2OpenReal?.addEventListener('click', async () => {
-    const mins = state.breakDurationMinutes || 15;
-
-    try {
-      await fetch('/api/break/start/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ duration_minutes: mins })
-      });
-
-      state.remainingSeconds = mins * 60;
-      playChimeStart();
-      showToast('Break Active 🌿', `${mins}m break running. Shorts shield active on youtube.com!`);
-      refreshAnalytics();
-      goToStage(3);
-    } catch (err) {
-      console.error('Failed to start break:', err);
-    }
-  });
-
   // ========================================================
   // STAGE 3: Authentic YouTube Browsing (Strictly No Shorts)
   // ========================================================
@@ -349,9 +328,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Nav Tabs
   const tabHome = document.getElementById('tab-home');
+  const tabChannels = document.getElementById('tab-channels');
   const tabSaved = document.getElementById('tab-saved');
   const tabHistory = document.getElementById('tab-history');
   const btnSurprisePick = document.getElementById('btn-surprise-pick');
+  const channelsCounterBadge = document.getElementById('channels-counter-badge');
+
+  // Channel View Elements
+  const ytChannelsView = document.getElementById('yt-channels-view');
+  const channelsMainHeader = document.getElementById('channels-main-header');
+  const channelsCardsGrid = document.getElementById('channels-cards-grid');
+  const channelFocusBanner = document.getElementById('channel-focus-banner');
+  const channelFocusAvatar = document.getElementById('channel-focus-avatar');
+  const channelFocusAvatarFallback = document.getElementById('channel-focus-avatar-fallback');
+  const channelFocusTitle = document.getElementById('channel-focus-title');
+  const channelFocusHandle = document.getElementById('channel-focus-handle');
+  const channelFocusSubs = document.getElementById('channel-focus-subs');
+  const channelFocusVideoCount = document.getElementById('channel-focus-video-count');
+  const channelVideosGrid = document.getElementById('channel-videos-grid');
+  const btnBackToAllChannels = document.getElementById('btn-back-to-all-channels');
+  const popularChannelsShelf = document.getElementById('popular-channels-shelf');
+  const popularChannelsChips = document.getElementById('popular-channels-chips');
+  const btnChannelsAddNew = document.getElementById('btn-channels-add-new');
+  const btnOpenAddChannelModal = document.getElementById('btn-open-add-channel-modal');
+
+  // Add Channel Modal Elements
+  const modalAddChannel = document.getElementById('modal-add-channel');
+  const btnCloseAddChannelModal = document.getElementById('btn-close-add-channel-modal');
+  const btnCancelAddChannel = document.getElementById('btn-cancel-add-channel');
+  const btnSubmitAddChannel = document.getElementById('btn-submit-add-channel');
+  const inputChannelQuery = document.getElementById('input-channel-query');
+  const addChannelFeedback = document.getElementById('add-channel-feedback');
 
   // Quarantine Modal Elements
   const modalShortsQuarantined = document.getElementById('modal-shorts-quarantined');
@@ -363,32 +370,35 @@ document.addEventListener('DOMContentLoaded', () => {
   // Stage 3 Local State
   let currentSearchQuery = '';
   let currentSelectedCategory = 'All';
-  let currentActiveTab = 'home'; // 'home', 'saved', 'history'
+  let currentActiveTab = 'home'; // 'home', 'channels', 'saved', 'history'
+  let currentActiveChannel = null;
 
   // Load Watched History from localStorage
   function getWatchedHistory() {
     try {
-      const raw = localStorage.getItem('fl_watched_history');
-      return raw ? JSON.parse(raw) : [];
+      return JSON.parse(localStorage.getItem('fl_watched_history') || '[]');
     } catch (e) {
       return [];
     }
   }
 
   function addWatchedHistory(video) {
+    if (!video || !video.youtube_id) return;
     let list = getWatchedHistory();
-    list = list.filter(v => v.id !== video.id && v.youtube_id !== video.youtube_id);
+    list = list.filter(v => v.youtube_id !== video.youtube_id);
     list.unshift({
-      id: video.id,
+      id: video.id || video.youtube_id,
+      youtube_id: video.youtube_id,
       title: video.title,
       channel: video.channel || 'YouTube',
-      duration: video.duration || video.duration_str || '25m',
+      duration: video.duration || video.duration_str || '24m',
+      duration_minutes: video.duration_minutes || 24,
       category: video.category || 'Curated',
-      thumbnail_url: video.thumbnail_url || `https://i.ytimg.com/vi/${video.youtube_id}/hqdefault.jpg`,
-      youtube_id: video.youtube_id,
-      watched_at: new Date().toISOString()
+      thumbnail_url: video.thumbnail_url,
+      description: video.description || '',
+      is_saved: video.is_saved
     });
-    if (list.length > 20) list = list.slice(0, 20);
+    if (list.length > 50) list = list.slice(0, 50);
     localStorage.setItem('fl_watched_history', JSON.stringify(list));
     updateHistoryCount();
   }
@@ -402,12 +412,20 @@ document.addEventListener('DOMContentLoaded', () => {
   function showFeedView() {
     if (ytFeedView) ytFeedView.style.display = 'block';
     if (ytWatchView) ytWatchView.style.display = 'none';
+    if (ytChannelsView) ytChannelsView.style.display = 'none';
   }
 
   function showWatchView() {
     if (ytFeedView) ytFeedView.style.display = 'none';
     if (ytWatchView) ytWatchView.style.display = 'block';
+    if (ytChannelsView) ytChannelsView.style.display = 'none';
     ytWatchView?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function showChannelsView() {
+    if (ytFeedView) ytFeedView.style.display = 'none';
+    if (ytWatchView) ytWatchView.style.display = 'none';
+    if (ytChannelsView) ytChannelsView.style.display = 'block';
   }
 
   function closeInlinePlayer() {
@@ -500,18 +518,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // Sync External Search Link
-      const btnOpenSearchExternal = document.getElementById('btn-open-search-external');
-      if (btnOpenSearchExternal) {
-        if (query) {
-          btnOpenSearchExternal.style.display = 'inline-flex';
-          btnOpenSearchExternal.href = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
-          btnOpenSearchExternal.textContent = `▶ Open "${query}" on YouTube.com ↗`;
-        } else {
-          btnOpenSearchExternal.style.display = 'none';
-        }
-      }
-
       // Show temporary loading indicator for search
       if (query && videoCardsGrid) {
         videoCardsGrid.innerHTML = `
@@ -576,19 +582,13 @@ document.addEventListener('DOMContentLoaded', () => {
     videoCardsGrid.innerHTML = '';
 
     if (!videos.length) {
-      const searchFallbackHtml = currentSearchQuery ? `
+      const searchFallbackHtml = `
         <div style="margin-top: 16px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-          <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(currentSearchQuery)}" target="_blank" class="pill-btn yt-btn-open-real" style="text-decoration: none; padding: 10px 20px;">
-            ▶ Open "${currentSearchQuery}" on YouTube.com ↗
-          </a>
           <button type="button" class="pill-btn pill-btn-outline" id="btn-reset-feed-filters">
             Reset All Filters
           </button>
-        </div>
-      ` : `
-        <div style="margin-top: 16px;">
-          <button type="button" class="pill-btn pill-btn-sm" id="btn-reset-feed-filters">
-            Reset All Filters
+          <button type="button" class="pill-btn" id="btn-search-channels-tab" style="background: var(--brand-dark); color: var(--brand-canvas);">
+            📺 Browse All Channels
           </button>
         </div>
       `;
@@ -619,6 +619,13 @@ document.addEventListener('DOMContentLoaded', () => {
           else p.classList.remove('active');
         });
         loadVideos('All', '', false);
+      });
+
+      document.getElementById('btn-search-channels-tab')?.addEventListener('click', () => {
+        currentActiveTab = 'channels';
+        updateActiveTabUI();
+        showChannelsView();
+        loadChannels();
       });
       return;
     }
@@ -937,8 +944,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Tab Switching Helper
   function updateActiveTabUI() {
-    [tabHome, tabSaved, tabHistory].forEach(t => t?.classList.remove('active'));
+    [tabHome, tabChannels, tabSaved, tabHistory].forEach(t => t?.classList.remove('active'));
     if (currentActiveTab === 'home') tabHome?.classList.add('active');
+    else if (currentActiveTab === 'channels') tabChannels?.classList.add('active');
     else if (currentActiveTab === 'saved') tabSaved?.classList.add('active');
     else if (currentActiveTab === 'history') tabHistory?.classList.add('active');
   }
@@ -948,6 +956,13 @@ document.addEventListener('DOMContentLoaded', () => {
     updateActiveTabUI();
     showFeedView();
     loadVideos(currentSelectedCategory, currentSearchQuery, false);
+  });
+
+  tabChannels?.addEventListener('click', () => {
+    currentActiveTab = 'channels';
+    updateActiveTabUI();
+    showChannelsView();
+    loadChannels();
   });
 
   tabSaved?.addEventListener('click', () => {
@@ -963,6 +978,436 @@ document.addEventListener('DOMContentLoaded', () => {
     showFeedView();
     loadVideos(currentSelectedCategory, currentSearchQuery, false);
   });
+
+  // ========================================================
+  // Channels Directory Engine
+  // ========================================================
+  async function updateChannelsCount() {
+    try {
+      const res = await fetch('/api/channels/');
+      const data = await res.json();
+      if (channelsCounterBadge) channelsCounterBadge.textContent = data.count || 0;
+    } catch (e) {
+      console.debug('Failed to update channels count:', e);
+    }
+  }
+
+  async function loadChannels() {
+    if (!channelsCardsGrid) return;
+    channelsCardsGrid.innerHTML = `
+      <div style="grid-column: 1 / -1; padding: 40px 20px; text-align: center; color: var(--brand-text-muted);">
+        <div style="font-size: 2rem; margin-bottom: 8px;">⏳</div>
+        <strong>Loading your subscribed YouTube channels...</strong>
+      </div>
+    `;
+
+    // Reset single-channel focus view
+    if (channelsMainHeader) channelsMainHeader.style.display = 'flex';
+    if (channelsCardsGrid) channelsCardsGrid.style.display = 'grid';
+    if (popularChannelsShelf) popularChannelsShelf.style.display = 'block';
+    if (channelFocusBanner) channelFocusBanner.style.display = 'none';
+    if (channelVideosGrid) channelVideosGrid.style.display = 'none';
+
+    try {
+      const res = await fetch('/api/channels/');
+      const data = await res.json();
+      const channels = data.channels || [];
+
+      if (channelsCounterBadge) channelsCounterBadge.textContent = channels.length;
+      renderChannels(channels);
+      loadPopularChannels();
+    } catch (err) {
+      channelsCardsGrid.innerHTML = `
+        <div style="grid-column: 1 / -1; padding: 30px; text-align: center; color: var(--brand-text-muted);">
+          Failed to load channels. Please try again.
+        </div>
+      `;
+    }
+  }
+
+  function renderChannels(channels) {
+    if (!channelsCardsGrid) return;
+    channelsCardsGrid.innerHTML = '';
+
+    if (!channels.length) {
+      channelsCardsGrid.innerHTML = `
+        <div style="grid-column: 1 / -1; padding: 48px 20px; text-align: center; color: var(--brand-text-muted);">
+          <div style="font-size: 2.2rem; margin-bottom: 10px;">📺</div>
+          <strong style="display: block; font-size: 1.15rem; color: var(--brand-dark); margin-bottom: 6px;">
+            No YouTube Channels Added Yet
+          </strong>
+          <span style="font-size: 0.88rem; display: block; max-width: 440px; margin: 0 auto 16px;">
+            Add any YouTube creator by handle, URL, or name. All their long-form uploads will be synced while Shorts are strictly quarantined.
+          </span>
+          <button type="button" class="pill-btn" id="btn-empty-add-channel" style="background: var(--brand-dark); color: var(--brand-canvas);">
+            ➕ Add Your First Channel
+          </button>
+        </div>
+      `;
+      document.getElementById('btn-empty-add-channel')?.addEventListener('click', () => openAddChannelModal());
+      return;
+    }
+
+    channels.forEach(ch => {
+      const card = document.createElement('div');
+      card.className = 'channel-card';
+      const avatar = ch.avatar_url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80';
+
+      card.innerHTML = `
+        <div class="channel-card-top">
+          <img src="${avatar}" alt="${ch.name}" class="channel-card-avatar-img" onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80'">
+          <div class="channel-card-meta">
+            <h4 class="channel-card-name" title="${ch.name}">${ch.name}</h4>
+            <span class="channel-card-handle">${ch.handle || ''}</span>
+            <span class="channel-card-subs">${ch.subscriber_count || 'Verified Creator'}</span>
+          </div>
+        </div>
+
+        <div class="channel-card-body">
+          <p class="channel-card-desc">${ch.description || 'Verified intentional creator synced to your FocusLoop library.'}</p>
+          <div class="channel-card-stats">
+            <span class="channel-longform-badge">
+              🛡️ ${ch.video_count} Long-Form Videos
+            </span>
+            <span style="font-size: 0.78rem; opacity: 0.75;">Zero Shorts</span>
+          </div>
+        </div>
+
+        <div class="channel-card-actions">
+          <button type="button" class="pill-btn pill-btn-sm btn-channel-browse" data-id="${ch.id}">
+            Browse Videos ↗
+          </button>
+          <button type="button" class="btn-channel-remove" data-id="${ch.id}" data-name="${ch.name}" title="Remove channel">
+            ✕
+          </button>
+        </div>
+      `;
+
+      // Browse Button
+      card.querySelector('.btn-channel-browse')?.addEventListener('click', () => {
+        browseChannel(ch.id);
+      });
+
+      // Remove Button
+      card.querySelector('.btn-channel-remove')?.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const cid = ch.id;
+        const cname = ch.name;
+        if (confirm(`Remove "${cname}" from your subscribed channels?`)) {
+          await removeChannel(cid, cname);
+        }
+      });
+
+      channelsCardsGrid.appendChild(card);
+    });
+  }
+
+  async function browseChannel(channelId) {
+    if (!channelVideosGrid) return;
+    channelVideosGrid.innerHTML = `
+      <div style="grid-column: 1 / -1; padding: 40px 20px; text-align: center; color: var(--brand-text-muted);">
+        <div style="font-size: 2rem; margin-bottom: 8px;">⏳</div>
+        <strong>Loading long-form videos for this creator...</strong>
+      </div>
+    `;
+
+    // Toggle views inside channels tab
+    if (channelsMainHeader) channelsMainHeader.style.display = 'none';
+    if (channelsCardsGrid) channelsCardsGrid.style.display = 'none';
+    if (popularChannelsShelf) popularChannelsShelf.style.display = 'none';
+    if (channelFocusBanner) channelFocusBanner.style.display = 'flex';
+    if (channelVideosGrid) channelVideosGrid.style.display = 'grid';
+
+    try {
+      const res = await fetch(`/api/channels/${channelId}/videos/`);
+      const data = await res.json();
+      const channel = data.channel;
+      const videos = data.videos || [];
+
+      // Populate Banner
+      if (channelFocusTitle) channelFocusTitle.textContent = channel.name;
+      if (channelFocusHandle) channelFocusHandle.textContent = channel.handle || '';
+      if (channelFocusSubs) channelFocusSubs.textContent = channel.subscriber_count || '';
+      if (channelFocusVideoCount) channelFocusVideoCount.textContent = `${videos.length} Verified Long-Form Videos`;
+
+      if (channelFocusAvatar) {
+        channelFocusAvatar.src = channel.avatar_url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80';
+        channelFocusAvatar.onerror = () => {
+          if (channelFocusAvatar) channelFocusAvatar.style.display = 'none';
+          if (channelFocusAvatarFallback) {
+            channelFocusAvatarFallback.style.display = 'flex';
+            channelFocusAvatarFallback.textContent = channel.name.charAt(0).toUpperCase();
+          }
+        };
+      }
+
+      // Render Channel Videos Grid
+      renderChannelVideos(videos, channel.name);
+    } catch (err) {
+      channelVideosGrid.innerHTML = `
+        <div style="grid-column: 1 / -1; padding: 30px; text-align: center; color: var(--brand-text-muted);">
+          Failed to load videos for this channel.
+        </div>
+      `;
+    }
+  }
+
+  function renderChannelVideos(videos, channelName) {
+    if (!channelVideosGrid) return;
+    channelVideosGrid.innerHTML = '';
+
+    if (!videos.length) {
+      channelVideosGrid.innerHTML = `
+        <div style="grid-column: 1 / -1; padding: 48px 20px; text-align: center; color: var(--brand-text-muted);">
+          <div style="font-size: 2rem; margin-bottom: 8px;">🛡️</div>
+          <strong>No long-form videos currently indexed for ${channelName}.</strong>
+          <p style="font-size: 0.88rem; margin-top: 6px;">All Shorts on this channel were quarantined. You can trigger an import with higher limits.</p>
+        </div>
+      `;
+      return;
+    }
+
+    videos.forEach(v => {
+      const card = document.createElement('div');
+      card.className = 'yt-card';
+      const thumb = v.thumbnail_url || `https://i.ytimg.com/vi/${v.youtube_id}/hqdefault.jpg`;
+      const fallbackThumb = `https://i.ytimg.com/vi/${v.youtube_id}/hqdefault.jpg`;
+      const duration = v.duration || (v.duration_minutes ? `${v.duration_minutes}m` : '25m');
+      const isSaved = !!v.is_saved;
+
+      card.innerHTML = `
+        <div class="yt-thumb-wrap">
+          <img 
+            class="yt-thumb-img" 
+            src="${thumb}" 
+            alt="${v.title}" 
+            loading="lazy"
+            onerror="if(this.src!=='${fallbackThumb}')this.src='${fallbackThumb}'"
+          >
+          <span class="yt-thumb-duration">${duration}</span>
+          <div class="yt-thumb-play-overlay">
+            <span class="yt-play-chip">▶ Watch</span>
+          </div>
+        </div>
+
+        <div class="yt-card-body">
+          <div class="yt-card-avatar">${channelName.charAt(0).toUpperCase()}</div>
+          <div class="yt-card-meta">
+            <h4 class="yt-card-title" title="${v.title}">${v.title}</h4>
+            <div class="yt-card-channel">
+              <span>${channelName}</span>
+              <span class="yt-card-verified-check" title="Verified Creator">✓</span>
+            </div>
+            <div class="yt-card-subline">
+              <span class="yt-card-cat-pill">${v.category || 'YouTube'}</span>
+              <span>•</span>
+              <span>${duration}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="yt-card-footer">
+          <button type="button" class="yt-card-save-btn ${isSaved ? 'saved' : ''}" data-id="${v.id}" title="Save to queue">
+            ${isSaved ? '★ Saved' : '☆ Save to Queue'}
+          </button>
+          <button type="button" class="pill-btn pill-btn-sm btn-play-card">Watch Now ↗</button>
+        </div>
+      `;
+
+      card.addEventListener('click', () => playVideoInline(v));
+      card.querySelector('.btn-play-card')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        playVideoInline(v);
+      });
+      card.querySelector('.yt-card-save-btn')?.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (v.id) await toggleSaveVideo(v.id, e.currentTarget);
+      });
+
+      channelVideosGrid.appendChild(card);
+    });
+  }
+
+  btnBackToAllChannels?.addEventListener('click', () => {
+    if (channelsMainHeader) channelsMainHeader.style.display = 'flex';
+    if (channelsCardsGrid) channelsCardsGrid.style.display = 'grid';
+    if (popularChannelsShelf) popularChannelsShelf.style.display = 'block';
+    if (channelFocusBanner) channelFocusBanner.style.display = 'none';
+    if (channelVideosGrid) channelVideosGrid.style.display = 'none';
+  });
+
+  async function removeChannel(channelId, channelName) {
+    try {
+      const res = await fetch(`/api/channels/${channelId}/`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.status === 'ok') {
+        showToast('Channel Removed', `"${channelName}" was removed from your list.`);
+        loadChannels();
+        updateChannelsCount();
+      }
+    } catch (e) {
+      console.error('Failed to remove channel:', e);
+    }
+  }
+
+  async function loadPopularChannels() {
+    if (!popularChannelsChips) return;
+    try {
+      const res = await fetch('/api/channels/popular/');
+      const data = await res.json();
+      const list = data.popular || [];
+
+      popularChannelsChips.innerHTML = '';
+      list.forEach(p => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'popular-channel-chip';
+        chip.innerHTML = `
+          <img src="${p.avatar}" alt="${p.name}" class="popular-chip-avatar">
+          <span>${p.name}</span>
+          <span class="popular-chip-add">➕</span>
+        `;
+        chip.addEventListener('click', async () => {
+          chip.disabled = true;
+          chip.style.opacity = '0.5';
+          showToast('Adding Channel...', `Ingesting ${p.name} via backend...`);
+          try {
+            const addRes = await fetch('/api/channels/add/', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ input: p.handle, max_videos: 30 })
+            });
+            const addData = await addRes.json();
+            if (addData.status === 'ok') {
+              showToast('Channel Added! 🚀', `Added ${p.name} (${addData.imported_count} videos, ${addData.shorts_excluded} shorts quarantined)`);
+              loadChannels();
+              updateChannelsCount();
+            } else {
+              showToast('Error', addData.message || 'Failed to add channel', true);
+            }
+          } catch (e) {
+            showToast('Error', 'Network error adding channel', true);
+          } finally {
+            chip.disabled = false;
+            chip.style.opacity = '1';
+          }
+        });
+        popularChannelsChips.appendChild(chip);
+      });
+    } catch (e) {
+      console.debug('Failed to load popular channels:', e);
+    }
+  }
+
+  // Add Channel Modal Handlers
+  function openAddChannelModal(initialQuery = '') {
+    if (inputChannelQuery) inputChannelQuery.value = initialQuery;
+    if (addChannelFeedback) {
+      addChannelFeedback.style.display = 'none';
+      addChannelFeedback.textContent = '';
+    }
+    modalAddChannel?.classList.add('open');
+    setTimeout(() => inputChannelQuery?.focus(), 100);
+  }
+
+  function closeAddChannelModal() {
+    modalAddChannel?.classList.remove('open');
+  }
+
+  btnOpenAddChannelModal?.addEventListener('click', () => openAddChannelModal());
+  btnChannelsAddNew?.addEventListener('click', () => openAddChannelModal());
+  btnCloseAddChannelModal?.addEventListener('click', closeAddChannelModal);
+  btnCancelAddChannel?.addEventListener('click', closeAddChannelModal);
+
+  // Suggestion buttons in modal
+  document.querySelectorAll('.btn-suggest-handle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const handle = btn.getAttribute('data-handle');
+      if (inputChannelQuery && handle) {
+        inputChannelQuery.value = handle;
+        submitAddChannel();
+      }
+    });
+  });
+
+  btnSubmitAddChannel?.addEventListener('click', () => {
+    submitAddChannel();
+  });
+
+  inputChannelQuery?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      submitAddChannel();
+    }
+  });
+
+  async function submitAddChannel() {
+    const raw = inputChannelQuery?.value.trim() || '';
+    if (!raw) {
+      if (addChannelFeedback) {
+        addChannelFeedback.style.display = 'block';
+        addChannelFeedback.style.backgroundColor = '#fef2f2';
+        addChannelFeedback.style.color = '#dc2626';
+        addChannelFeedback.textContent = 'Please enter a channel handle, URL, or name.';
+      }
+      return;
+    }
+
+    if (btnSubmitAddChannel) {
+      btnSubmitAddChannel.disabled = true;
+      btnSubmitAddChannel.textContent = 'Ingesting & Stripping Shorts ⏳...';
+    }
+
+    if (addChannelFeedback) {
+      addChannelFeedback.style.display = 'block';
+      addChannelFeedback.style.backgroundColor = '#f0fdf4';
+      addChannelFeedback.style.color = '#166534';
+      addChannelFeedback.innerHTML = `
+        <strong>🔍 Contacting backend engine...</strong><br>
+        Scanning uploads for "${raw}", checking durations, and strictly quarantining Shorts.
+      `;
+    }
+
+    try {
+      const res = await fetch('/api/channels/add/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ input: raw, max_videos: 40 })
+      });
+      const data = await res.json();
+
+      if (data.status === 'ok') {
+        showToast('Channel Ingested! 🚀', `${data.channel.name}: ${data.imported_count} long-form videos imported. ${data.shorts_excluded} Shorts quarantined.`);
+        closeAddChannelModal();
+        updateChannelsCount();
+
+        // Switch to Channels view and browse
+        currentActiveTab = 'channels';
+        updateActiveTabUI();
+        showChannelsView();
+        loadChannels();
+      } else {
+        if (addChannelFeedback) {
+          addChannelFeedback.style.display = 'block';
+          addChannelFeedback.style.backgroundColor = '#fef2f2';
+          addChannelFeedback.style.color = '#dc2626';
+          addChannelFeedback.textContent = data.message || 'Failed to add channel. Please check the handle or name.';
+        }
+      }
+    } catch (err) {
+      if (addChannelFeedback) {
+        addChannelFeedback.style.display = 'block';
+        addChannelFeedback.style.backgroundColor = '#fef2f2';
+        addChannelFeedback.style.color = '#dc2626';
+        addChannelFeedback.textContent = 'Network error while contacting backend. Please try again.';
+      }
+    } finally {
+      if (btnSubmitAddChannel) {
+        btnSubmitAddChannel.disabled = false;
+        btnSubmitAddChannel.textContent = 'Import Channel & Strip Shorts 🚀';
+      }
+    }
+  }
 
   async function triggerSurpriseVideo() {
     try {
@@ -1172,6 +1617,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial Boot
   refreshAnalytics();
   updateHistoryCount();
+  updateChannelsCount();
   loadVideos('All');
   startTicker();
 

@@ -31,7 +31,7 @@ async function checkBoundaryState() {
     if (data.mode === 'BREAK') {
       // YouTube is ALLOWED, but Shorts are strictly BLOCKED!
       if (window.location.pathname.startsWith('/shorts')) {
-        // Intercept and block Shorts
+        // Intercept and block Shorts video viewer
         await fetch(`${BACKEND_URL}/api/events/log/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -48,6 +48,13 @@ async function checkBoundaryState() {
         return;
       }
 
+      // If user clicks into a creator's /shorts tab, redirect to their /videos long-form tab
+      if (window.location.pathname.endsWith('/shorts') || window.location.pathname.endsWith('/shorts/')) {
+        const channelVideosUrl = window.location.href.replace(/\/shorts\/?$/, '/videos');
+        window.location.replace(channelVideosUrl);
+        return;
+      }
+
       // Strip Shorts elements from DOM to avoid autopilot temptation
       stripShortsElements();
       injectBreakBanner(data.remaining_seconds);
@@ -60,11 +67,16 @@ async function checkBoundaryState() {
 
 function stripShortsElements() {
   const shortsSelectors = [
-    'ytd-rich-section-renderer', // Shorts shelf on homepage
-    'ytd-reel-shelf-renderer',   // Shorts reel shelf
-    'a[title="Shorts"]',         // Shorts link in sidebar
-    'ytd-guide-entry-renderer a[href^="/shorts"]',
-    'ytd-mini-guide-entry-renderer a[href^="/shorts"]'
+    'ytd-rich-section-renderer',                    // Shorts shelf on homepage
+    'ytd-reel-shelf-renderer',                      // Shorts reel shelf on homepage and channels
+    'a[title="Shorts"]',                            // Shorts link in sidebar
+    'ytd-guide-entry-renderer a[href^="/shorts"]',  // Sidebar Shorts
+    'ytd-mini-guide-entry-renderer a[href^="/shorts"]',
+    'yt-tab-shape[tab-title="Shorts"]',             // Channel profile "Shorts" tab
+    'tp-yt-paper-tab:has([title="Shorts"])',        // Classic channel profile "Shorts" tab
+    'a[href*="/shorts"]',                           // Any link pointing to shorts
+    'ytd-rich-item-renderer:has(a[href*="/shorts"])', // Channel video grid items that are shorts
+    'ytd-grid-video-renderer:has(a[href*="/shorts"])' // Channel video grid items that are shorts
   ];
 
   const hideCSS = `

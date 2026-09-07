@@ -115,14 +115,11 @@
           </div>
 
           <div class="stage-action-bar" style="display: flex; flex-direction: column; gap: 12px; align-items: center; margin-top: 24px;">
-            <a href="https://www.youtube.com" target="_blank" class="pill-btn pill-btn-lg" id="btn-stage2-open-real" style="width: 100%; max-width: 500px; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.25);">
-              ▶ Open My YouTube Main Page (youtube.com) ↗
-            </a>
-            <button id="btn-launch-youtube-break" class="pill-btn pill-btn-outline" style="width: 100%; max-width: 500px;">
-              Or Browse Long-Form in FocusLoop Dashboard →
+            <button id="btn-launch-youtube-break" class="pill-btn pill-btn-lg" style="width: 100%; max-width: 500px; font-weight: 700;">
+              Start Break & Browse Long-Form YouTube →
             </button>
             <span style="font-size: 0.85rem; color: var(--brand-text-muted); text-align: center;">
-              🛡️ Full access to your Google account on YouTube. Shorts loops remain strictly quarantined.
+              🛡️ Intentional entertainment only. Shorts loops and infinite reels remain strictly quarantined.
             </span>
           </div>
         </div>
@@ -155,7 +152,7 @@
           </div>
         </div>
 
-        <!-- Google Account YouTube Status & Direct Launch Bar -->
+        <!-- Google Account YouTube Status Bar -->
         <div class="yt-google-account-banner" id="yt-google-account-banner">
           <div class="yt-account-badge-left">
             <div class="yt-account-icon" id="yt-account-avatar-char">G</div>
@@ -165,9 +162,9 @@
             </div>
           </div>
           <div class="yt-account-badge-right">
-            <a href="https://www.youtube.com" target="_blank" class="pill-btn yt-btn-open-real" id="btn-open-real-youtube" title="Open YouTube.com main page in a new tab logged into your Google account">
-              ▶ Open youtube.com Main Page ↗
-            </a>
+            <span class="badge-connected-verified" style="font-size: 0.82rem; padding: 6px 14px;">
+              🛡️ Long-Form Shield Active
+            </span>
           </div>
         </div>
 
@@ -203,6 +200,9 @@
           </div>
 
           <div class="yt-app-actions">
+            <button id="btn-open-add-channel-modal" class="pill-btn pill-btn-sm" style="background: var(--brand-dark); color: var(--brand-canvas); font-weight: 700;" title="Add any YouTube channel to backend and strip shorts">
+              ➕ Add Channel
+            </button>
             <button id="btn-test-shorts-intercept" class="pill-btn pill-btn-sm yt-btn-test-shorts" title="Simulate opening a /shorts/ URL to verify defense">
               🧪 Test Shorts Defense
             </button>
@@ -214,6 +214,9 @@
           <div class="yt-nav-tabs">
             <button type="button" class="yt-nav-tab active" id="tab-home" data-tab="home">
               <span class="tab-icon">🏠</span> Home Feed
+            </button>
+            <button type="button" class="yt-nav-tab" id="tab-channels" data-tab="channels">
+              <span class="tab-icon">📺</span> Channels (<span id="channels-counter-badge">0</span>)
             </button>
             <button type="button" class="yt-nav-tab" id="tab-saved" data-tab="saved">
               <span class="tab-icon">★</span> Saved Queue (<span id="saved-counter-badge">0</span>)
@@ -251,10 +254,7 @@
               <span class="yt-feed-sub">Filtered intentional content • Infinite loops stripped</span>
             </div>
             <div class="yt-feed-header-right" style="display: flex; gap: 8px; align-items: center;">
-              <a id="btn-open-search-external" href="https://www.youtube.com" target="_blank" class="pill-btn pill-btn-sm yt-btn-open-real" style="display: none; text-decoration: none; padding: 6px 14px; font-size: 0.82rem;">
-                ▶ Open Search on YouTube.com ↗
-              </a>
-              <span class="yt-grid-status-badge">100% Long-Form</span>
+              <span class="yt-grid-status-badge">100% Long-Form Only</span>
             </div>
           </div>
 
@@ -336,6 +336,73 @@
               <div class="yt-up-next-list" id="up-next-list">
                 <!-- Dynamically populated with related long-form videos -->
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====================================================
+             VIEW 3: YOUTUBE CHANNELS DIRECTORY (STRICTLY NO SHORTS)
+             ==================================================== -->
+        <div id="yt-channels-view" class="yt-channels-view" style="display: none;">
+          <div class="yt-feed-header-row" id="channels-main-header">
+            <div class="yt-feed-header-left">
+              <h3 class="yt-feed-heading" id="channels-list-heading">My Subscribed YouTube Channels</h3>
+              <span class="yt-feed-sub">Every channel's full long-form catalog • All Shorts strictly quarantined</span>
+            </div>
+            <div class="yt-feed-header-right">
+              <button id="btn-channels-add-new" class="pill-btn pill-btn-sm" type="button" style="background: var(--brand-dark); color: var(--brand-canvas); font-weight: 700;">
+                ➕ Add Another Channel
+              </button>
+            </div>
+          </div>
+
+          <!-- Active Channel Banner (when a single channel is selected) -->
+          <div id="channel-focus-banner" class="channel-focus-banner" style="display: none;">
+            <div class="channel-banner-left">
+              <div class="channel-focus-avatar-wrap">
+                <img id="channel-focus-avatar" src="" alt="Channel Avatar" class="channel-focus-avatar-img">
+                <div id="channel-focus-avatar-fallback" class="channel-focus-avatar-fallback">Y</div>
+              </div>
+              <div class="channel-focus-meta">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <h2 id="channel-focus-title" class="channel-focus-name">Channel Name</h2>
+                  <span class="channel-badge-check" title="Verified Creator">✓</span>
+                </div>
+                <div class="channel-subline-row">
+                  <span id="channel-focus-handle" class="channel-focus-handle">@handle</span>
+                  <span>•</span>
+                  <span id="channel-focus-subs" class="channel-focus-subs">Subscribers</span>
+                  <span>•</span>
+                  <span id="channel-focus-video-count" class="channel-focus-count">0 Long-Form Videos</span>
+                </div>
+              </div>
+            </div>
+            <div class="channel-banner-right">
+              <span class="channel-shield-guarantee">🛡️ 100% Long-Form • Zero Shorts</span>
+              <button id="btn-back-to-all-channels" class="pill-btn pill-btn-sm pill-btn-outline" type="button">
+                ← All Channels
+              </button>
+            </div>
+          </div>
+
+          <!-- Channel Long-form Videos Grid (shown when viewing a specific channel) -->
+          <div id="channel-videos-grid" class="yt-video-grid" style="display: none;"></div>
+
+          <!-- Channels Cards Directory Grid (shown when viewing all channels) -->
+          <div id="channels-cards-grid" class="channels-cards-grid">
+            <!-- Dynamically populated with YouTube channel cards -->
+          </div>
+
+          <!-- Quick-Add Popular Creators Shelf -->
+          <div class="popular-channels-shelf" id="popular-channels-shelf">
+            <div class="popular-shelf-header">
+              <div>
+                <h4 style="margin: 0; font-size: 1.05rem;">Popular Intentional Creators</h4>
+                <span style="font-size: 0.85rem; color: var(--brand-text-muted);">1-Click Add via Backend (Shorts Excluded)</span>
+              </div>
+            </div>
+            <div id="popular-channels-chips" class="popular-channels-chips">
+              <!-- Dynamically populated with popular channel chips -->
             </div>
           </div>
         </div>
@@ -422,7 +489,7 @@
 
         <div class="locked-test-row">
           <button id="btn-test-locked-youtube" class="pill-btn pill-btn-outline">
-            Open YouTube (Test Lock Defense)
+            Simulate Temptation (Test Lock Defense)
           </button>
           <button id="btn-end-study-lock" class="pill-btn pill-btn-sm pill-btn-outline">
             Emergency Session End
@@ -585,6 +652,65 @@
         </button>
         <button class="pill-btn pill-btn-quarantine-dismiss" id="btn-dismiss-quarantine">
           Return to YouTube Feed 🌿
+        </button>
+      </div>
+  <!-- ========================================================
+       MODAL: ADD YOUTUBE CHANNEL (BACKEND INGESTION)
+       ======================================================== -->
+  <div id="modal-add-channel" class="modal-backdrop">
+    <div class="modal-sheet">
+      <div class="modal-header-row">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 1.4rem;">📺</span>
+          <h3>Add YouTube Channel to Backend</h3>
+        </div>
+        <button class="modal-close-btn" id="btn-close-add-channel-modal">&times;</button>
+      </div>
+
+      <div class="modal-content-body">
+        <p style="font-size: 0.92rem; color: var(--brand-text-muted); margin-bottom: 16px;">
+          Add any channel to your library using its link, <code>@handle</code>, or name. FocusLoop's backend engine will import all their uploads and <strong>strictly exclude every short video</strong>.
+        </p>
+
+        <div class="connect-form-group">
+          <label for="input-channel-query" class="input-label">Channel Handle, URL, or Name:</label>
+          <input 
+            type="text" 
+            id="input-channel-query" 
+            class="brand-input" 
+            placeholder="e.g. @veritasium, @DonkeyTube, https://youtube.com/@3blue1brown"
+            autocomplete="off"
+          >
+        </div>
+
+        <div style="margin-top: 14px; margin-bottom: 18px;">
+          <span class="input-label" style="font-size: 0.82rem;">Quick Suggestions:</span>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px;" id="add-channel-suggestions">
+            <button type="button" class="pill-btn pill-btn-sm pill-btn-outline btn-suggest-handle" data-handle="@veritasium">@veritasium</button>
+            <button type="button" class="pill-btn pill-btn-sm pill-btn-outline btn-suggest-handle" data-handle="Donkey Tube">Donkey Tube</button>
+            <button type="button" class="pill-btn pill-btn-sm pill-btn-outline btn-suggest-handle" data-handle="@3blue1brown">@3blue1brown</button>
+            <button type="button" class="pill-btn pill-btn-sm pill-btn-outline btn-suggest-handle" data-handle="@kurzgesagt">@kurzgesagt</button>
+            <button type="button" class="pill-btn pill-btn-sm pill-btn-outline btn-suggest-handle" data-handle="@HubermanLab">@HubermanLab</button>
+            <button type="button" class="pill-btn pill-btn-sm pill-btn-outline btn-suggest-handle" data-handle="@greatartexplained">@greatartexplained</button>
+          </div>
+        </div>
+
+        <div class="connect-rules-card">
+          <strong style="font-size: 0.88rem; color: #166534;">🛡️ Shorts Quarantine Policy:</strong>
+          <ul style="font-size: 0.82rem; color: var(--brand-text-muted); margin-top: 6px; padding-left: 18px; line-height: 1.5;">
+            <li>Videos &le; 60 seconds are strictly rejected.</li>
+            <li>Reels and <code>#shorts</code> tags are quarantined and excluded.</li>
+            <li>Only intentional long-form videos will be added to your feed.</li>
+          </ul>
+        </div>
+
+        <div id="add-channel-feedback" style="display: none; margin-top: 14px; padding: 12px; border-radius: 8px; font-size: 0.88rem;"></div>
+      </div>
+
+      <div class="modal-footer-row">
+        <button class="pill-btn pill-btn-outline" id="btn-cancel-add-channel" type="button">Cancel</button>
+        <button class="pill-btn" id="btn-submit-add-channel" type="button">
+          Import Channel & Strip Shorts 🚀
         </button>
       </div>
     </div>

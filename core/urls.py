@@ -18,6 +18,11 @@ urlpatterns = [
     path('api/analytics/', views.api_analytics, name='api_analytics'),
     path('api/videos/', views.api_videos, name='api_videos'),
     path('api/videos/<int:video_id>/save/', views.api_toggle_saved_video, name='api_toggle_saved_video'),
+    path('api/channels/', views.api_channels, name='api_channels'),
+    path('api/channels/add/', views.api_channels_add, name='api_channels_add'),
+    path('api/channels/popular/', views.api_channels_popular, name='api_channels_popular'),
+    path('api/channels/<int:channel_id>/', views.api_channel_detail, name='api_channel_detail'),
+    path('api/channels/<int:channel_id>/videos/', views.api_channel_videos, name='api_channel_videos'),
     path('api/settings/', views.api_settings, name='api_settings'),
     path('api/seed/', views.api_seed_data, name='api_seed_data'),
 ]

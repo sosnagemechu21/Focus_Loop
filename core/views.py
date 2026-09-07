@@ -7,7 +7,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from django.db.models import Avg, Sum, Count
 
-from .models import FocusState, SessionHistory, BoundaryEvent, CuratedVideo, ProtectedApp
+from .models import FocusState, SessionHistory, BoundaryEvent, CuratedVideo, ProtectedApp, YouTubeChannel
+from .youtube_service import YouTubeService
+
 
 
 def index_view(request):
@@ -582,6 +584,132 @@ def api_toggle_saved_video(request, video_id):
         return JsonResponse({'status': 'ok', 'is_saved': video.is_saved})
     except CuratedVideo.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'Video not found'}, status=404)
+
+
+def api_channels(request):
+    """List all ingested YouTube channels"""
+    channels = YouTubeChannel.objects.all()
+    data = []
+    for c in channels:
+        v_count = c.videos.count() if hasattr(c, 'videos') else c.video_count
+        data.append({
+            'id': c.id,
+            'name': c.name,
+            'handle': c.handle or '',
+            'channel_id': c.channel_id or '',
+            'custom_url': c.custom_url or f"https://www.youtube.com/{c.handle}",
+            'avatar_url': c.avatar_url,
+            'description': c.description,
+            'subscriber_count': c.subscriber_count,
+            'video_count': v_count,
+            'created_at': c.created_at.strftime('%b %d, %Y')
+        })
+    return JsonResponse({'channels': data, 'count': len(data)})
+
+
+@csrf_exempt
+def api_channels_add(request):
+    """
+    Backend entry point to ingest any YouTube channel.
+    Strictly excludes all Shorts and imports only intentional long-form videos.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'POST method required'}, status=405)
+
+    try:
+        data = json.loads(request.body) if request.body else {}
+    except Exception:
+        data = {}
+
+    identifier = (data.get('input') or data.get('channel') or data.get('handle') or '').strip()
+    if not identifier:
+        return JsonResponse({'status': 'error', 'message': 'No channel handle, URL, or name provided.'}, status=400)
+
+    max_videos = int(data.get('max_videos', 40))
+    result = YouTubeService.ingest_channel(identifier, max_videos=max_videos)
+    status_code = 200 if result.get('status') == 'ok' else 400
+    return JsonResponse(result, status=status_code)
+
+
+@csrf_exempt
+def api_channel_detail(request, channel_id):
+    """Retrieve or delete an ingested YouTube channel"""
+    try:
+        channel = YouTubeChannel.objects.get(id=channel_id)
+    except YouTubeChannel.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Channel not found'}, status=404)
+
+    if request.method == 'DELETE':
+        channel_name = channel.name
+        channel.delete()
+        return JsonResponse({'status': 'ok', 'message': f"Channel '{channel_name}' removed."})
+
+    return JsonResponse({
+        'status': 'ok',
+        'channel': {
+            'id': channel.id,
+            'name': channel.name,
+            'handle': channel.handle,
+            'avatar_url': channel.avatar_url,
+            'description': channel.description,
+            'subscriber_count': channel.subscriber_count,
+            'video_count': channel.videos.count()
+        }
+    })
+
+
+def api_channel_videos(request, channel_id):
+    """Get all long-form videos from a specific channel (Shorts strictly quarantined)"""
+    try:
+        channel = YouTubeChannel.objects.get(id=channel_id)
+    except YouTubeChannel.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Channel not found'}, status=404)
+
+    videos = channel.videos.all()
+    if not videos.exists():
+        # Fallback by channel name match if videos weren't linked by foreign key
+        from django.db.models import Q
+        videos = CuratedVideo.objects.filter(Q(channel__iexact=channel.name) | Q(channel_ref=channel))
+
+    data = [{
+        'id': v.id,
+        'youtube_id': v.youtube_id,
+        'title': v.title,
+        'channel': v.channel,
+        'duration': v.duration_str,
+        'duration_minutes': v.duration_minutes,
+        'category': v.category,
+        'thumbnail_url': v.thumbnail_url,
+        'description': v.description,
+        'is_saved': v.is_saved
+    } for v in videos]
+
+    return JsonResponse({
+        'channel': {
+            'id': channel.id,
+            'name': channel.name,
+            'handle': channel.handle,
+            'avatar_url': channel.avatar_url,
+            'subscriber_count': channel.subscriber_count,
+            'description': channel.description,
+            'video_count': len(data)
+        },
+        'videos': data
+    })
+
+
+def api_channels_popular(request):
+    """Preset list of popular intentional channels that can be added with 1-click"""
+    popular = [
+        {'name': 'Veritasium', 'handle': '@veritasium', 'category': 'Science & Tech', 'avatar': 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=100&auto=format&fit=crop&q=80', 'desc': 'An element of truth - videos about science, education, and anything interesting.'},
+        {'name': '3Blue1Brown', 'handle': '@3blue1brown', 'category': 'Coding & Math', 'avatar': 'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=100&auto=format&fit=crop&q=80', 'desc': 'Animating math and visual explanations of deep concepts.'},
+        {'name': 'Kurzgesagt', 'handle': '@kurzgesagt', 'category': 'Science & Tech', 'avatar': 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=100&auto=format&fit=crop&q=80', 'desc': 'Videos explaining things with optimistic nihilism.'},
+        {'name': 'Donkey Tube', 'handle': '@DonkeyTube', 'category': 'Entertainment & Culture', 'avatar': 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=100&auto=format&fit=crop&q=80', 'desc': 'Heartwarming long-form interviews, essays, and cultural stories by Comedian Eshetu.'},
+        {'name': 'Great Art Explained', 'handle': '@greatartexplained', 'category': 'Art & Essays', 'avatar': 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=100&auto=format&fit=crop&q=80', 'desc': 'Focusing on one great work of art at a time, looking at it in detail.'},
+        {'name': 'Huberman Lab', 'handle': '@hubermanlab', 'category': 'Science & Health', 'avatar': 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=100&auto=format&fit=crop&q=80', 'desc': 'Neuroscience and science-based tools for everyday life.'}
+    ]
+    return JsonResponse({'popular': popular})
+
 
 
 @csrf_exempt

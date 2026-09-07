@@ -1,0 +1,9 @@
+# Add any YouTube channel handle, URL, or channel name below (one per line):
+# All Shorts from these channels will be strictly excluded.
+
+@veritasium
+@3blue1brown
+@kurzgesagt
+@DonkeyTube
+@greatartexplained
+@HubermanLab

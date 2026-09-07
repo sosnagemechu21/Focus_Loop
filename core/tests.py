@@ -2,7 +2,8 @@ import json
 from django.test import TestCase, Client
 from django.utils import timezone
 from datetime import timedelta
-from .models import FocusState, SessionHistory, BoundaryEvent, CuratedVideo, ProtectedApp
+from .models import FocusState, SessionHistory, BoundaryEvent, CuratedVideo, ProtectedApp, YouTubeChannel
+
 
 
 class FocusGuardBoundaryTests(TestCase):
@@ -108,5 +109,76 @@ class FocusGuardBoundaryTests(TestCase):
         res_surprise = self.client.get('/api/videos/?surprise=true')
         self.assertEqual(res_surprise.status_code, 200)
         self.assertIn('video', res_surprise.json())
+
+    def test_shorts_quarantine_logic(self):
+        from core.youtube_service import is_short_video, parse_iso8601_duration
+
+        # Test ISO 8601 duration parser
+        self.assertEqual(parse_iso8601_duration('PT45S'), 45)
+        self.assertEqual(parse_iso8601_duration('PT1M15S'), 75)
+        self.assertEqual(parse_iso8601_duration('PT1H20M'), 4800)
+
+        # Videos <= 60 seconds are ALWAYS shorts
+        self.assertTrue(is_short_video(title='Funny Clip', duration_seconds=45))
+        self.assertTrue(is_short_video(title='Quick Tip', duration_seconds=60))
+        self.assertTrue(is_short_video(title='Sample', duration_str='0:45'))
+
+        # Videos with #shorts or reel endpoints are ALWAYS shorts
+        self.assertTrue(is_short_video(title='Amazing Hack #shorts', duration_seconds=120))
+        self.assertTrue(is_short_video(title='Daily Reel', url_or_endpoint='https://youtube.com/shorts/xyz'))
+
+        # Genuine long-form videos (> 60s without shorts tags) are NOT shorts
+        self.assertFalse(is_short_video(title='Deep Space Documentary', duration_seconds=1800, duration_str='30m'))
+        self.assertFalse(is_short_video(title='How Computers Calculate', duration_seconds=900, duration_str='15m'))
+
+    def test_channels_api_lifecycle(self):
+        # 1. Create test channel
+        chan = YouTubeChannel.objects.create(
+            name='Test Tech Channel',
+            handle='@testtech',
+            subscriber_count='1.2M subscribers',
+            video_count=2
+        )
+        vid1 = CuratedVideo.objects.create(
+            channel_ref=chan,
+            title='Understanding CPU Architecture',
+            channel=chan.name,
+            duration_str='28m',
+            duration_minutes=28,
+            youtube_id='cpu_arch_123'
+        )
+        vid2 = CuratedVideo.objects.create(
+            channel_ref=chan,
+            title='Compiler Design Deep Dive',
+            channel=chan.name,
+            duration_str='45m',
+            duration_minutes=45,
+            youtube_id='compiler_456'
+        )
+
+        # 2. Test GET /api/channels/
+        res_list = self.client.get('/api/channels/')
+        self.assertEqual(res_list.status_code, 200)
+        data = res_list.json()
+        self.assertIn('channels', data)
+        self.assertTrue(any(c['handle'] == '@testtech' for c in data['channels']))
+
+        # 3. Test GET /api/channels/<id>/videos/
+        res_videos = self.client.get(f'/api/channels/{chan.id}/videos/')
+        self.assertEqual(res_videos.status_code, 200)
+        v_data = res_videos.json()
+        self.assertEqual(len(v_data['videos']), 2)
+        self.assertEqual(v_data['channel']['name'], 'Test Tech Channel')
+
+        # 4. Test GET /api/channels/popular/
+        res_pop = self.client.get('/api/channels/popular/')
+        self.assertEqual(res_pop.status_code, 200)
+        self.assertTrue(len(res_pop.json()['popular']) >= 3)
+
+        # 5. Test DELETE /api/channels/<id>/
+        res_del = self.client.delete(f'/api/channels/{chan.id}/')
+        self.assertEqual(res_del.status_code, 200)
+        self.assertFalse(YouTubeChannel.objects.filter(id=chan.id).exists())
+
 
 
