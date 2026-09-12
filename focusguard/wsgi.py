@@ -17,7 +17,7 @@ application = get_wsgi_application()
 app = application
 
 # If running on Vercel with SQLite in /tmp, ensure migrations are run
-if os.environ.get('VERCEL') and not os.environ.get('DATABASE_URL'):
+if os.environ.get('VERCEL'):
     try:
         from django.core.management import call_command
         call_command('migrate', interactive=False)
