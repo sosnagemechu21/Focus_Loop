@@ -538,6 +538,29 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      if (!query && currentActiveTab !== 'history') {
+        if (videoCardsGrid) {
+          videoCardsGrid.innerHTML = `
+            <div style="grid-column: 1 / -1; padding: 64px 20px; text-align: center; color: var(--brand-text-muted);">
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 16px; opacity: 0.5;">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <strong style="display: block; font-size: 1.2rem; color: var(--brand-dark); margin-bottom: 8px;">
+                Ready for your break?
+              </strong>
+              <span style="font-size: 0.95rem; max-width: 300px; display: inline-block; line-height: 1.5;">
+                Use the search bar above to find long-form videos. Shorts are automatically filtered out.
+              </span>
+            </div>
+          `;
+        }
+        if (feedResultsCount) {
+          feedResultsCount.textContent = `Search for videos`;
+        }
+        return;
+      }
+
       // Show temporary loading indicator for search
       if (query && videoCardsGrid) {
         videoCardsGrid.innerHTML = `
@@ -1643,7 +1666,7 @@ document.addEventListener('DOMContentLoaded', () => {
   refreshAnalytics();
   updateHistoryCount();
   updateChannelsCount();
-  loadVideos('All');
+  loadVideos('');
   startTicker();
 
   // Sync state from server first, then fall back to starting at Stage 1
