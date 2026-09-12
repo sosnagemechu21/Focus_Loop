@@ -503,13 +503,10 @@ def api_videos(request):
         _seed_curated_videos()
 
     category = request.GET.get('category')
-    only_saved = request.GET.get('saved') == 'true'
     surprise = request.GET.get('surprise') == 'true'
     q = request.GET.get('q', '').strip()
 
     videos = CuratedVideo.objects.all()
-    if only_saved:
-        videos = videos.filter(is_saved=True)
 
     if q:
         from django.db.models import Q
@@ -543,8 +540,7 @@ def api_videos(request):
             'youtube_id': video.youtube_id,
             'category': video.category,
             'description': video.description,
-            'thumbnail_url': video.thumbnail_url,
-            'is_saved': video.is_saved
+            'thumbnail_url': video.thumbnail_url
         }})
 
     data = []
@@ -558,12 +554,11 @@ def api_videos(request):
             'youtube_id': v.youtube_id,
             'category': v.category,
             'description': v.description,
-            'thumbnail_url': v.thumbnail_url,
-            'is_saved': v.is_saved
+            'thumbnail_url': v.thumbnail_url
         })
 
     # If user searched for a term, query live YouTube so real channels like "donkey tube" work!
-    if q and not only_saved:
+    if q:
         live_results = _search_youtube_live(q)
         existing_ids = {str(item['youtube_id']) for item in data}
         for item in live_results:
@@ -573,51 +568,6 @@ def api_videos(request):
 
     return JsonResponse({'videos': data})
 
-
-@csrf_exempt
-def api_toggle_saved_video(request, video_id):
-    """Toggle saved status of a video"""
-    try:
-        video = CuratedVideo.objects.get(id=video_id)
-        video.is_saved = not video.is_saved
-        video.save()
-        return JsonResponse({'status': 'ok', 'is_saved': video.is_saved, 'id': video.id})
-    except CuratedVideo.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Video not found'}, status=404)
-
-
-@csrf_exempt
-def api_save_by_youtube_id(request):
-    """Toggle saved status by youtube_id. Creates the video in DB if it doesn't exist yet (e.g. from live search results)."""
-    if request.method != 'POST':
-        return JsonResponse({'status': 'error', 'message': 'POST required'}, status=405)
-
-    data = json.loads(request.body) if request.body else {}
-    youtube_id = data.get('youtube_id', '').strip()
-    if not youtube_id:
-        return JsonResponse({'status': 'error', 'message': 'youtube_id required'}, status=400)
-
-    video = CuratedVideo.objects.filter(youtube_id=youtube_id).first()
-
-    if video:
-        # Toggle existing video
-        video.is_saved = not video.is_saved
-        video.save()
-    else:
-        # Create from the provided data and mark as saved
-        video = CuratedVideo.objects.create(
-            youtube_id=youtube_id,
-            title=data.get('title', 'Saved Video'),
-            channel=data.get('channel', 'YouTube'),
-            duration_str=data.get('duration', '24m'),
-            duration_minutes=int(data.get('duration_minutes', 24)),
-            category=data.get('category', 'YouTube'),
-            description=data.get('description', ''),
-            thumbnail_url=data.get('thumbnail_url', f'https://i.ytimg.com/vi/{youtube_id}/hqdefault.jpg'),
-            is_saved=True
-        )
-
-    return JsonResponse({'status': 'ok', 'is_saved': video.is_saved, 'id': video.id})
 
 
 def api_channels(request):

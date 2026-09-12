@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (num === 3) {
       pageContainer?.classList.add('wide-mode');
       showFeedView();
-      loadVideos(state.currentSelectedCategory || 'All');
+      loadVideos();
     } else {
       pageContainer?.classList.remove('wide-mode');
       if (typeof closeInlinePlayer === 'function') closeInlinePlayer();
@@ -315,9 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnVideoClearSearch = document.getElementById('btn-video-clear-search');
   const btnTestShortsIntercept = document.getElementById('btn-test-shorts-intercept');
   const feedResultsCount = document.getElementById('feed-results-count');
-  const savedCounterBadge = document.getElementById('saved-counter-badge');
   const historyCounterBadge = document.getElementById('history-counter-badge');
-  const categoryPills = document.querySelectorAll('.filter-pill[data-cat]');
   const videoCardsGrid = document.getElementById('video-cards-grid');
 
   // Views & Player Elements
@@ -328,18 +326,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const watchVideoTitle = document.getElementById('watch-video-title');
   const watchChannelAvatar = document.getElementById('watch-channel-avatar');
   const watchChannelName = document.getElementById('watch-channel-name');
-  const btnWatchSave = document.getElementById('btn-watch-save');
   const btnWatchCopy = document.getElementById('btn-watch-copy');
   const btnPlayerExternalLink = document.getElementById('btn-player-external-link');
   const watchDurationTag = document.getElementById('watch-duration-tag');
-  const watchCategoryTag = document.getElementById('watch-category-tag');
   const watchVideoDesc = document.getElementById('watch-video-desc');
   const upNextList = document.getElementById('up-next-list');
 
   // Nav Tabs
   const tabHome = document.getElementById('tab-home');
   const tabChannels = document.getElementById('tab-channels');
-  const tabSaved = document.getElementById('tab-saved');
   const tabHistory = document.getElementById('tab-history');
   const btnSurprisePick = document.getElementById('btn-surprise-pick');
   const channelsCounterBadge = document.getElementById('channels-counter-badge');
@@ -362,27 +357,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnChannelsAddNew = document.getElementById('btn-channels-add-new');
   const btnOpenAddChannelModal = document.getElementById('btn-open-add-channel-modal');
 
-  
   // Mobile Bottom Nav Sync
   const mobNavWatch = document.getElementById('mob-nav-watch');
-  const mobNavSaved = document.getElementById('mob-nav-saved');
   const mobNavChannels = document.getElementById('mob-nav-channels');
 
   function updateMobileNavUI() {
-    [mobNavWatch, mobNavSaved, mobNavChannels].forEach(m => m?.classList.remove('active'));
+    [mobNavWatch, mobNavChannels].forEach(m => m?.classList.remove('active'));
     if (currentActiveTab === 'home') mobNavWatch?.classList.add('active');
-    else if (currentActiveTab === 'saved') mobNavSaved?.classList.add('active');
     else if (currentActiveTab === 'channels') mobNavChannels?.classList.add('active');
   }
 
   mobNavWatch?.addEventListener('click', () => {
     if (state.currentStage !== 3) goToStage(3);
     tabHome?.click();
-  });
-
-  mobNavSaved?.addEventListener('click', () => {
-    if (state.currentStage !== 3) goToStage(3);
-    tabSaved?.click();
   });
 
   mobNavChannels?.addEventListener('click', () => {
@@ -407,8 +394,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Stage 3 Local State
   let currentSearchQuery = '';
-  let currentSelectedCategory = 'All';
-  let currentActiveTab = 'home'; // 'home', 'channels', 'saved', 'history'
+  let currentActiveTab = 'home'; // 'home', 'channels', 'history'
   let currentActiveChannel = null;
 
   // Load Watched History from localStorage
@@ -431,10 +417,8 @@ document.addEventListener('DOMContentLoaded', () => {
       channel: video.channel || 'YouTube',
       duration: video.duration || video.duration_str || '24m',
       duration_minutes: video.duration_minutes || 24,
-      category: video.category || 'Curated',
       thumbnail_url: video.thumbnail_url,
-      description: video.description || '',
-      is_saved: video.is_saved
+      description: video.description || ''
     });
     if (list.length > 50) list = list.slice(0, 50);
     localStorage.setItem('fl_watched_history', JSON.stringify(list));
@@ -544,7 +528,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ========================================================
   // Video Feed & API Fetching
   // ========================================================
-  async function loadVideos(category = 'All', query = '', onlySaved = false) {
+  async function loadVideos(query = '') {
     try {
       if (currentActiveTab === 'history') {
         const historyList = getWatchedHistory();
@@ -560,7 +544,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (query && videoCardsGrid) {
         videoCardsGrid.innerHTML = `
           <div style="grid-column: 1 / -1; padding: 48px 20px; text-align: center; color: var(--brand-text-muted);">
-            
             <strong style="display: block; font-size: 1.1rem; color: var(--brand-dark); margin-bottom: 6px;">
               Searching YouTube for "${query}"...
             </strong>
@@ -571,9 +554,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       let url = '/api/videos/?';
       const params = [];
-      if (category && category !== 'All') params.push(`category=${encodeURIComponent(category)}`);
       if (query) params.push(`q=${encodeURIComponent(query)}`);
-      if (onlySaved) params.push('saved=true');
 
       url += params.join('&');
       const res = await fetch(url);
@@ -585,30 +566,14 @@ document.addEventListener('DOMContentLoaded', () => {
       if (feedResultsCount) {
         if (query) {
           feedResultsCount.textContent = `Search results for "${query}" (${state.videos.length})`;
-        } else if (onlySaved) {
-          feedResultsCount.textContent = `Saved Queue (${state.videos.length} videos)`;
-        } else if (category && category !== 'All') {
-          feedResultsCount.textContent = `${category} (${state.videos.length} videos)`;
         } else {
           feedResultsCount.textContent = `Approved Long-Form Videos (${state.videos.length})`;
         }
       }
 
-      updateSavedCount();
       updateHistoryCount();
     } catch (err) {
       console.debug('Failed to load videos:', err);
-    }
-  }
-
-  async function updateSavedCount() {
-    try {
-      const res = await fetch('/api/videos/?saved=true');
-      const data = await res.json();
-      const count = (data.videos || []).length;
-      if (savedCounterBadge) savedCounterBadge.textContent = count;
-    } catch (e) {
-      console.debug('Failed to update saved count:', e);
     }
   }
 
@@ -623,7 +588,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const searchFallbackHtml = `
         <div style="margin-top: 16px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
           <button type="button" class="pill-btn pill-btn-outline" id="btn-reset-feed-filters">
-            Reset All Filters
+            Reset Search
           </button>
           <button type="button" class="pill-btn" id="btn-search-channels-tab" style="background: var(--brand-dark); color: var(--brand-canvas);">
             Browse Channels
@@ -633,14 +598,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       videoCardsGrid.innerHTML = `
         <div style="grid-column: 1 / -1; padding: 48px 20px; text-align: center; color: var(--brand-text-muted);">
-          
           <strong style="display: block; font-size: 1.1rem; color: var(--brand-dark); margin-bottom: 6px;">
             ${currentSearchQuery ? `No cached long-form videos found for "${currentSearchQuery}"` : 'No long-form videos found'}
           </strong>
           <span style="font-size: 0.88rem; display: block; max-width: 440px; margin: 0 auto;">
             ${currentSearchQuery 
               ? 'You can open this search directly on YouTube with Shorts protection enabled, or search for another topic.' 
-              : 'No videos matched your filter. Try a different category or reset filters.'}
+              : 'No videos matched your filter. Try a different search or reset filters.'}
           </span>
           ${searchFallbackHtml}
         </div>
@@ -649,14 +613,9 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('btn-reset-feed-filters')?.addEventListener('click', () => {
         if (videoSearchInput) videoSearchInput.value = '';
         currentSearchQuery = '';
-        currentSelectedCategory = 'All';
         currentActiveTab = 'home';
         updateActiveTabUI();
-        categoryPills.forEach(p => {
-          if (p.getAttribute('data-cat') === 'All') p.classList.add('active');
-          else p.classList.remove('active');
-        });
-        loadVideos('All', '', false);
+        loadVideos('');
       });
 
       document.getElementById('btn-search-channels-tab')?.addEventListener('click', () => {
@@ -678,7 +637,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const duration = v.duration || (v.duration_minutes ? `${v.duration_minutes}m` : '25m');
       const channel = v.channel || 'Documentary Channel';
       const channelInitial = channel.charAt(0).toUpperCase();
-      const isSaved = !!v.is_saved;
 
       card.innerHTML = `
         <div class="yt-thumb-wrap">
@@ -704,17 +662,12 @@ document.addEventListener('DOMContentLoaded', () => {
               <span class="yt-card-verified-check">Verified</span>
             </div>
             <div class="yt-card-subline">
-              <span class="yt-card-cat-pill">${v.category || 'Curated'}</span>
-              <span>•</span>
               <span>${duration}</span>
             </div>
           </div>
         </div>
 
         <div class="yt-card-footer">
-          <button type="button" class="yt-card-save-btn ${isSaved ? 'saved' : ''}" data-id="${v.id || ''}" data-ytid="${v.youtube_id || ''}" title="Save to queue">
-            ${isSaved ? 'Saved' : 'Save'}
-          </button>
           <button type="button" class="pill-btn pill-btn-sm btn-play-card">Watch</button>
         </div>
       `;
@@ -728,17 +681,6 @@ document.addEventListener('DOMContentLoaded', () => {
       card.querySelector('.btn-play-card')?.addEventListener('click', (e) => {
         e.stopPropagation();
         playVideoInline(v);
-      });
-
-      // Save Button Click
-      card.querySelector('.yt-card-save-btn')?.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        const btn = e.currentTarget;
-        if (v.id) {
-          await toggleSaveVideo(v.id, btn, v);
-        } else if (v.youtube_id) {
-          await toggleSaveByYoutubeId(v, btn);
-        }
       });
 
       videoCardsGrid.appendChild(card);
@@ -764,29 +706,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (watchDurationTag) {
       watchDurationTag.textContent = video.duration || `${video.duration_minutes || 25} min`;
     }
-    if (watchCategoryTag) {
-      watchCategoryTag.textContent = video.category || 'Science & Tech';
-    }
     if (watchVideoDesc) {
       watchVideoDesc.textContent = video.description || 'Deep intentional documentary and video essay content for your scheduled break.';
     }
 
     if (btnPlayerExternalLink) {
       btnPlayerExternalLink.href = `https://www.youtube.com/watch?v=${video.youtube_id}`;
-    }
-
-    // Update Save button state
-    if (btnWatchSave) {
-      btnWatchSave.textContent = video.is_saved ? 'Saved' : 'Save Video';
-      btnWatchSave.onclick = async () => {
-        if (video.id) {
-          await toggleSaveVideo(video.id, null, video);
-          btnWatchSave.textContent = video.is_saved ? 'Saved' : 'Save Video';
-        } else if (video.youtube_id) {
-          await toggleSaveByYoutubeId(video, null);
-          btnWatchSave.textContent = video.is_saved ? 'Saved' : 'Save Video';
-        }
-      };
     }
 
     // Embed YouTube Player with rel=0, autoplay=1, enablejsapi=1
@@ -843,7 +768,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         <div class="yt-up-next-meta">
           <div class="yt-up-next-title" title="${item.title}">${item.title}</div>
-          <div class="yt-up-next-channel">${item.channel} • <span style="font-weight: 700;">${item.category}</span></div>
+          <div class="yt-up-next-channel">${item.channel}</div>
         </div>
       `;
 
@@ -864,79 +789,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   });
-
-  // Toggle Save Video API
-  async function toggleSaveVideo(videoId, btnEl, videoObj) {
-    try {
-      const res = await fetch(`/api/videos/${videoId}/save/`, { method: 'POST' });
-      const data = await res.json();
-      if (data.status === 'ok') {
-        const isNowSaved = data.is_saved;
-        if (videoObj) videoObj.is_saved = isNowSaved;
-        if (btnEl) {
-          if (isNowSaved) {
-            btnEl.classList.add('saved');
-            btnEl.textContent = 'Saved';
-            showToast('Video Saved', 'Added to your Saved list.');
-          } else {
-            btnEl.classList.remove('saved');
-            btnEl.textContent = 'Save';
-            showToast('Video Removed', 'Removed from your Saved Queue.');
-          }
-        }
-        updateSavedCount();
-        if (currentActiveTab === 'saved') {
-          loadVideos(currentSelectedCategory, currentSearchQuery, true);
-        }
-      }
-    } catch (err) {
-      console.error('Failed to toggle save video:', err);
-    }
-  }
-
-  // Toggle Save by YouTube ID (for live search results without DB primary key)
-  async function toggleSaveByYoutubeId(videoObj, btnEl) {
-    try {
-      const res = await fetch('/api/videos/save-by-ytid/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          youtube_id: videoObj.youtube_id,
-          title: videoObj.title || 'Saved Video',
-          channel: videoObj.channel || 'YouTube',
-          duration: videoObj.duration || videoObj.duration_str || '24m',
-          duration_minutes: videoObj.duration_minutes || 24,
-          category: videoObj.category || 'YouTube',
-          description: videoObj.description || '',
-          thumbnail_url: videoObj.thumbnail_url || `https://i.ytimg.com/vi/${videoObj.youtube_id}/hqdefault.jpg`
-        })
-      });
-      const data = await res.json();
-      if (data.status === 'ok') {
-        const isNowSaved = data.is_saved;
-        // Update the video object with the new DB id so subsequent toggles use the fast path
-        if (data.id) videoObj.id = data.id;
-        videoObj.is_saved = isNowSaved;
-        if (btnEl) {
-          if (isNowSaved) {
-            btnEl.classList.add('saved');
-            btnEl.textContent = 'Saved';
-            showToast('Video Saved', 'Added to your Saved list.');
-          } else {
-            btnEl.classList.remove('saved');
-            btnEl.textContent = 'Save';
-            showToast('Video Removed', 'Removed from your Saved Queue.');
-          }
-        }
-        updateSavedCount();
-        if (currentActiveTab === 'saved') {
-          loadVideos(currentSelectedCategory, currentSearchQuery, true);
-        }
-      }
-    } catch (err) {
-      console.error('Failed to toggle save by youtube_id:', err);
-    }
-  }
 
   // ========================================================
   // Search & Navigation Handlers
@@ -963,7 +815,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!raw) {
       currentSearchQuery = '';
       if (btnVideoClearSearch) btnVideoClearSearch.style.display = 'none';
-      loadVideos(currentSelectedCategory, '', currentActiveTab === 'saved');
+      loadVideos('');
       return;
     }
 
@@ -993,7 +845,6 @@ document.addEventListener('DOMContentLoaded', () => {
             title: data.title || 'Custom Long-Form Video',
             channel: data.channel || 'YouTube',
             duration: data.duration || 'Long-form',
-            category: data.category || 'Curated',
             thumbnail_url: data.thumbnail_url,
             youtube_id: data.video_id,
             description: data.description
@@ -1011,14 +862,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 3. TEXT SEARCH
     currentSearchQuery = raw;
-    currentSelectedCategory = 'All';
-    categoryPills.forEach(p => {
-      if (p.getAttribute('data-cat') === 'All') p.classList.add('active');
-      else p.classList.remove('active');
-    });
     if (btnVideoClearSearch) btnVideoClearSearch.style.display = 'inline-block';
     showFeedView();
-    loadVideos('All', currentSearchQuery, currentActiveTab === 'saved');
+    loadVideos(currentSearchQuery);
   }
 
   btnVideoClearSearch?.addEventListener('click', () => {
@@ -1026,16 +872,15 @@ document.addEventListener('DOMContentLoaded', () => {
     currentSearchQuery = '';
     if (btnVideoClearSearch) btnVideoClearSearch.style.display = 'none';
     showFeedView();
-    loadVideos(currentSelectedCategory, '', currentActiveTab === 'saved');
+    loadVideos('');
   });
 
   // Tab Switching Helper
   function updateActiveTabUI() {
     updateMobileNavUI();
-    [tabHome, tabChannels, tabSaved, tabHistory].forEach(t => t?.classList.remove('active'));
+    [tabHome, tabChannels, tabHistory].forEach(t => t?.classList.remove('active'));
     if (currentActiveTab === 'home') tabHome?.classList.add('active');
     else if (currentActiveTab === 'channels') tabChannels?.classList.add('active');
-    else if (currentActiveTab === 'saved') tabSaved?.classList.add('active');
     else if (currentActiveTab === 'history') tabHistory?.classList.add('active');
   }
 
@@ -1043,7 +888,7 @@ document.addEventListener('DOMContentLoaded', () => {
     currentActiveTab = 'home';
     updateActiveTabUI();
     showFeedView();
-    loadVideos(currentSelectedCategory, currentSearchQuery, false);
+    loadVideos(currentSearchQuery);
   });
 
   tabChannels?.addEventListener('click', () => {
@@ -1053,18 +898,11 @@ document.addEventListener('DOMContentLoaded', () => {
     loadChannels();
   });
 
-  tabSaved?.addEventListener('click', () => {
-    currentActiveTab = 'saved';
-    updateActiveTabUI();
-    showFeedView();
-    loadVideos(currentSelectedCategory, currentSearchQuery, true);
-  });
-
   tabHistory?.addEventListener('click', () => {
     currentActiveTab = 'history';
     updateActiveTabUI();
     showFeedView();
-    loadVideos(currentSelectedCategory, currentSearchQuery, false);
+    loadVideos('');
   });
 
   // ========================================================
@@ -1084,7 +922,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!channelsCardsGrid) return;
     channelsCardsGrid.innerHTML = `
       <div style="grid-column: 1 / -1; padding: 40px 20px; text-align: center; color: var(--brand-text-muted);">
-        
         <strong>Loading your subscribed YouTube channels...</strong>
       </div>
     `;
@@ -1120,7 +957,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!channels.length) {
       channelsCardsGrid.innerHTML = `
         <div style="grid-column: 1 / -1; padding: 48px 20px; text-align: center; color: var(--brand-text-muted);">
-          
           <strong style="display: block; font-size: 1.15rem; color: var(--brand-dark); margin-bottom: 6px;">
             No YouTube Channels Added Yet
           </strong>
@@ -1194,7 +1030,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!channelVideosGrid) return;
     channelVideosGrid.innerHTML = `
       <div style="grid-column: 1 / -1; padding: 40px 20px; text-align: center; color: var(--brand-text-muted);">
-        
         <strong>Loading long-form videos for this creator...</strong>
       </div>
     `;
@@ -1247,7 +1082,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!videos.length) {
       channelVideosGrid.innerHTML = `
         <div style="grid-column: 1 / -1; padding: 48px 20px; text-align: center; color: var(--brand-text-muted);">
-          
           <strong>No long-form videos currently indexed for ${channelName}.</strong>
           <p style="font-size: 0.88rem; margin-top: 6px;">All Shorts on this channel were quarantined. You can trigger an import with higher limits.</p>
         </div>
@@ -1261,7 +1095,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const thumb = v.thumbnail_url || `https://i.ytimg.com/vi/${v.youtube_id}/hqdefault.jpg`;
       const fallbackThumb = `https://i.ytimg.com/vi/${v.youtube_id}/hqdefault.jpg`;
       const duration = v.duration || (v.duration_minutes ? `${v.duration_minutes}m` : '25m');
-      const isSaved = !!v.is_saved;
 
       card.innerHTML = `
         <div class="yt-thumb-wrap">
@@ -1287,17 +1120,12 @@ document.addEventListener('DOMContentLoaded', () => {
               <span class="yt-card-verified-check">Verified</span>
             </div>
             <div class="yt-card-subline">
-              <span class="yt-card-cat-pill">${v.category || 'YouTube'}</span>
-              <span>•</span>
               <span>${duration}</span>
             </div>
           </div>
         </div>
 
         <div class="yt-card-footer">
-          <button type="button" class="yt-card-save-btn ${isSaved ? 'saved' : ''}" data-id="${v.id}" title="Save to queue">
-            ${isSaved ? 'Saved' : 'Save'}
-          </button>
           <button type="button" class="pill-btn pill-btn-sm btn-play-card">Watch</button>
         </div>
       `;
@@ -1306,14 +1134,6 @@ document.addEventListener('DOMContentLoaded', () => {
       card.querySelector('.btn-play-card')?.addEventListener('click', (e) => {
         e.stopPropagation();
         playVideoInline(v);
-      });
-      card.querySelector('.yt-card-save-btn')?.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        if (v.id) {
-          await toggleSaveVideo(v.id, e.currentTarget, v);
-        } else if (v.youtube_id) {
-          await toggleSaveByYoutubeId(v, e.currentTarget);
-        }
       });
 
       channelVideosGrid.appendChild(card);
@@ -1407,7 +1227,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   btnOpenAddChannelModal?.addEventListener('click', () => openAddChannelModal());
-  // Top Add Channel Button
   const btnOpenAddChannelTop = document.getElementById('btn-open-add-channel-top');
   btnOpenAddChannelTop?.addEventListener('click', () => openAddChannelModal());
 
@@ -1415,7 +1234,6 @@ document.addEventListener('DOMContentLoaded', () => {
   btnCloseAddChannelModal?.addEventListener('click', closeAddChannelModal);
   btnCancelAddChannel?.addEventListener('click', closeAddChannelModal);
 
-  // Suggestion buttons in modal
   document.querySelectorAll('.btn-suggest-handle').forEach(btn => {
     btn.addEventListener('click', () => {
       const handle = btn.getAttribute('data-handle');
@@ -1477,7 +1295,6 @@ document.addEventListener('DOMContentLoaded', () => {
         closeAddChannelModal();
         updateChannelsCount();
 
-        // Switch to Channels view and browse
         currentActiveTab = 'channels';
         updateActiveTabUI();
         showChannelsView();
@@ -1519,17 +1336,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   btnSurprisePick?.addEventListener('click', triggerSurpriseVideo);
-
-  // Category Filter Pills
-  categoryPills.forEach(pill => {
-    pill.addEventListener('click', () => {
-      categoryPills.forEach(p => p.classList.remove('active'));
-      pill.classList.add('active');
-      currentSelectedCategory = pill.getAttribute('data-cat') || 'All';
-      showFeedView();
-      loadVideos(currentSelectedCategory, currentSearchQuery, currentActiveTab === 'saved');
-    });
-  });
 
   // ========================================================
   // STAGE 4: Ask Study Hours
