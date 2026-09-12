@@ -244,7 +244,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const savedEmail = localStorage.getItem('fl_connected_email');
   if (savedEmail) {
-    connectEmailInput.value = savedEmail;
+    state.isConnected = true;
+    state.connectedEmail = savedEmail;
+    accountUnconnectedBox.style.display = 'none';
+    accountConnectedBox.style.display = 'flex';
+    accountNameText.textContent = `Google Account: ${savedEmail}`;
+    accountAvatarChar.textContent = savedEmail.charAt(0).toUpperCase();
+
+    const ytAccountEmailLabel = document.getElementById('yt-account-email-label');
+    const ytAccountAvatarChar = document.getElementById('yt-account-avatar-char');
+    if (ytAccountEmailLabel) ytAccountEmailLabel.textContent = `Google Account: ${savedEmail}`;
+    if (ytAccountAvatarChar) ytAccountAvatarChar.textContent = savedEmail.charAt(0).toUpperCase();
   }
 
 
