@@ -120,12 +120,15 @@ document.addEventListener('DOMContentLoaded', () => {
     state.currentStage = num;
 
     const pageContainer = document.querySelector('.page-container');
+    const mobNav = document.getElementById('mobile-bottom-nav');
     if (num === 3) {
       pageContainer?.classList.add('wide-mode');
+      if (mobNav) mobNav.style.display = 'flex';
       showFeedView();
       loadVideos();
     } else {
       pageContainer?.classList.remove('wide-mode');
+      if (mobNav) mobNav.style.display = 'none';
       if (typeof closeInlinePlayer === 'function') closeInlinePlayer();
     }
 
