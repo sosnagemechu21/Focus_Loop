@@ -211,7 +211,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const email = connectEmailInput.value.trim() || 'student@gmail.com';
     state.isConnected = true;
     state.connectedEmail = email;
-    localStorage.setItem('fl_connected_email', email);
 
     accountUnconnectedBox.style.display = 'none';
     accountConnectedBox.style.display = 'flex';
@@ -235,21 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
     goToStage(2);
   });
 
-  // Check existing connection
-  const savedEmail = localStorage.getItem('fl_connected_email');
-  if (savedEmail) {
-    state.isConnected = true;
-    state.connectedEmail = savedEmail;
-    accountUnconnectedBox.style.display = 'none';
-    accountConnectedBox.style.display = 'flex';
-    accountNameText.textContent = `Google Account: ${savedEmail}`;
-    accountAvatarChar.textContent = savedEmail.charAt(0).toUpperCase();
 
-    const ytAccountEmailLabel = document.getElementById('yt-account-email-label');
-    const ytAccountAvatarChar = document.getElementById('yt-account-avatar-char');
-    if (ytAccountEmailLabel) ytAccountEmailLabel.textContent = `Google Account: ${savedEmail}`;
-    if (ytAccountAvatarChar) ytAccountAvatarChar.textContent = savedEmail.charAt(0).toUpperCase();
-  }
 
   // ========================================================
   // STAGE 2: Choose Break Time
@@ -1430,7 +1415,7 @@ document.addEventListener('DOMContentLoaded', () => {
       await fetch('/api/focus/end/', { method: 'POST' });
       showToast('Study Session Concluded', 'Great job honoring your boundary!');
       refreshAnalytics();
-      goToStage(2);
+      goToStage(1);
     } catch (e) {
       console.error('End session error:', e);
     }
@@ -1633,15 +1618,10 @@ document.addEventListener('DOMContentLoaded', () => {
   loadVideos('All');
   startTicker();
 
-  // Sync state from server first, then fall back to localStorage check
+  // Sync state from server first, then fall back to starting at Stage 1
   syncFromServer().then(handled => {
     if (!handled) {
-      // No active server session — use localStorage connection state
-      if (state.isConnected) {
-        goToStage(2);
-      } else {
-        goToStage(1);
-      }
+      goToStage(1);
     }
   });
 });

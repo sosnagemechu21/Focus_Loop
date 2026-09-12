@@ -11,7 +11,7 @@ class FocusState(models.Model):
         ('IDLE', 'Idle ⏸️'),
     ]
 
-    mode = models.CharField(max_length=20, choices=MODE_CHOICES, default='FOCUS')
+    mode = models.CharField(max_length=20, choices=MODE_CHOICES, default='IDLE')
     session_id = models.CharField(max_length=64, default=uuid.uuid4)
     task_name = models.CharField(max_length=120, default="Deep Work / Study")
     start_time = models.DateTimeField(default=timezone.now)
