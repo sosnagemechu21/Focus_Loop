@@ -140,6 +140,16 @@ document.addEventListener('DOMContentLoaded', () => {
       stages[num].scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
+    // Show/hide break timer bar based on whether a break is active
+    const stickyBreakTimer = document.getElementById('sticky-break-timer');
+    if (stickyBreakTimer) {
+      if (num === 3 && state.remainingSeconds > 0) {
+        stickyBreakTimer.style.display = 'flex';
+      } else {
+        stickyBreakTimer.style.display = 'none';
+      }
+    }
+
     // Update Header Stepper Badges
     Object.keys(stageBadges).forEach(k => {
       const idx = parseInt(k, 10);
@@ -702,7 +712,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
 
         <div class="yt-card-footer">
-          <button type="button" class="yt-card-save-btn ${isSaved ? 'saved' : ''}" data-id="${v.id}" title="Save to queue">
+          <button type="button" class="yt-card-save-btn ${isSaved ? 'saved' : ''}" data-id="${v.id || ''}" data-ytid="${v.youtube_id || ''}" title="Save to queue">
             ${isSaved ? 'Saved' : 'Save'}
           </button>
           <button type="button" class="pill-btn pill-btn-sm btn-play-card">Watch</button>
@@ -725,7 +735,9 @@ document.addEventListener('DOMContentLoaded', () => {
         e.stopPropagation();
         const btn = e.currentTarget;
         if (v.id) {
-          await toggleSaveVideo(v.id, btn);
+          await toggleSaveVideo(v.id, btn, v);
+        } else if (v.youtube_id) {
+          await toggleSaveByYoutubeId(v, btn);
         }
       });
 
@@ -768,8 +780,10 @@ document.addEventListener('DOMContentLoaded', () => {
       btnWatchSave.textContent = video.is_saved ? 'Saved' : 'Save Video';
       btnWatchSave.onclick = async () => {
         if (video.id) {
-          await toggleSaveVideo(video.id);
-          video.is_saved = !video.is_saved;
+          await toggleSaveVideo(video.id, null, video);
+          btnWatchSave.textContent = video.is_saved ? 'Saved' : 'Save Video';
+        } else if (video.youtube_id) {
+          await toggleSaveByYoutubeId(video, null);
           btnWatchSave.textContent = video.is_saved ? 'Saved' : 'Save Video';
         }
       };
@@ -852,12 +866,13 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Toggle Save Video API
-  async function toggleSaveVideo(videoId, btnEl) {
+  async function toggleSaveVideo(videoId, btnEl, videoObj) {
     try {
       const res = await fetch(`/api/videos/${videoId}/save/`, { method: 'POST' });
       const data = await res.json();
       if (data.status === 'ok') {
         const isNowSaved = data.is_saved;
+        if (videoObj) videoObj.is_saved = isNowSaved;
         if (btnEl) {
           if (isNowSaved) {
             btnEl.classList.add('saved');
@@ -876,6 +891,50 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (err) {
       console.error('Failed to toggle save video:', err);
+    }
+  }
+
+  // Toggle Save by YouTube ID (for live search results without DB primary key)
+  async function toggleSaveByYoutubeId(videoObj, btnEl) {
+    try {
+      const res = await fetch('/api/videos/save-by-ytid/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          youtube_id: videoObj.youtube_id,
+          title: videoObj.title || 'Saved Video',
+          channel: videoObj.channel || 'YouTube',
+          duration: videoObj.duration || videoObj.duration_str || '24m',
+          duration_minutes: videoObj.duration_minutes || 24,
+          category: videoObj.category || 'YouTube',
+          description: videoObj.description || '',
+          thumbnail_url: videoObj.thumbnail_url || `https://i.ytimg.com/vi/${videoObj.youtube_id}/hqdefault.jpg`
+        })
+      });
+      const data = await res.json();
+      if (data.status === 'ok') {
+        const isNowSaved = data.is_saved;
+        // Update the video object with the new DB id so subsequent toggles use the fast path
+        if (data.id) videoObj.id = data.id;
+        videoObj.is_saved = isNowSaved;
+        if (btnEl) {
+          if (isNowSaved) {
+            btnEl.classList.add('saved');
+            btnEl.textContent = 'Saved';
+            showToast('Video Saved', 'Added to your Saved list.');
+          } else {
+            btnEl.classList.remove('saved');
+            btnEl.textContent = 'Save';
+            showToast('Video Removed', 'Removed from your Saved Queue.');
+          }
+        }
+        updateSavedCount();
+        if (currentActiveTab === 'saved') {
+          loadVideos(currentSelectedCategory, currentSearchQuery, true);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to toggle save by youtube_id:', err);
     }
   }
 
@@ -1250,7 +1309,11 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       card.querySelector('.yt-card-save-btn')?.addEventListener('click', async (e) => {
         e.stopPropagation();
-        if (v.id) await toggleSaveVideo(v.id, e.currentTarget);
+        if (v.id) {
+          await toggleSaveVideo(v.id, e.currentTarget, v);
+        } else if (v.youtube_id) {
+          await toggleSaveByYoutubeId(v, e.currentTarget);
+        }
       });
 
       channelVideosGrid.appendChild(card);
@@ -1685,6 +1748,78 @@ document.addEventListener('DOMContentLoaded', () => {
     showToast('App Ready', 'FocusLoop installed as an app.');
   });
 
+  // ========================================================
+  // Server State Sync (Timer Persistence)
+  // ========================================================
+  async function syncFromServer() {
+    try {
+      const res = await fetch('/api/status/');
+      const data = await res.json();
+
+      const serverMode = data.mode;           // 'FOCUS', 'BREAK', or 'IDLE'
+      const remaining = data.remaining_seconds;
+      const elapsed = data.elapsed_seconds;
+      const isExpired = data.is_expired;
+      const plannedMins = data.planned_duration_minutes;
+      const taskName = data.task_name;
+      const breakMins = data.break_duration_minutes || 15;
+
+      if (serverMode === 'BREAK') {
+        if (isExpired) {
+          // Break ended while app was closed → auto-transition to ask study
+          try {
+            await fetch('/api/break/end/', { method: 'POST' });
+          } catch (e) { /* ignore */ }
+          showToast('Break Ended', 'Your break finished while the app was closed. Choose study time.');
+          goToStage(4);
+        } else {
+          // Break is still active → resume Stage 3 with correct countdown
+          state.remainingSeconds = remaining;
+          state.elapsedSeconds = elapsed;
+          state.breakDurationMinutes = plannedMins;
+          goToStage(3);
+          // Re-show the break timer bar since we have active time
+          const stickyBreakTimer = document.getElementById('sticky-break-timer');
+          if (stickyBreakTimer) stickyBreakTimer.style.display = 'flex';
+          if (breakLiveClock) breakLiveClock.textContent = formatClock(remaining);
+        }
+        return true; // handled
+      }
+
+      if (serverMode === 'FOCUS') {
+        if (isExpired) {
+          // Focus/study ended while app was closed → end session, go to Stage 2
+          try {
+            await fetch('/api/focus/end/', { method: 'POST' });
+          } catch (e) { /* ignore */ }
+          showToast('Study Complete', 'Your study session finished while the app was closed. Great job!');
+          goToStage(2);
+        } else {
+          // Focus/study still active → resume Stage 5 with correct countdown
+          state.remainingSeconds = remaining;
+          state.elapsedSeconds = elapsed;
+          state.studyDurationHours = plannedMins / 60;
+          state.studyTask = taskName || 'Study Session';
+
+          const lockedTaskNotice = document.getElementById('locked-task-notice');
+          const hoursLeft = Math.max(0.1, remaining / 3600).toFixed(1);
+          if (lockedTaskNotice) {
+            lockedTaskNotice.textContent = `YouTube is locked for ${hoursLeft} hours for "${state.studyTask}". All distractions shielded!`;
+          }
+          if (lockedClockDigits) lockedClockDigits.textContent = formatHoursClock(remaining);
+          goToStage(5);
+        }
+        return true; // handled
+      }
+
+      // IDLE mode — no active session
+      return false;
+    } catch (err) {
+      console.debug('Failed to sync from server:', err);
+      return false;
+    }
+  }
+
   // Initial Boot
   refreshAnalytics();
   updateHistoryCount();
@@ -1692,10 +1827,15 @@ document.addEventListener('DOMContentLoaded', () => {
   loadVideos('All');
   startTicker();
 
-  // If already connected from localStorage, start at Stage 2
-  if (state.isConnected) {
-    goToStage(2);
-  } else {
-    goToStage(1);
-  }
+  // Sync state from server first, then fall back to localStorage check
+  syncFromServer().then(handled => {
+    if (!handled) {
+      // No active server session — use localStorage connection state
+      if (state.isConnected) {
+        goToStage(2);
+      } else {
+        goToStage(1);
+      }
+    }
+  });
 });
