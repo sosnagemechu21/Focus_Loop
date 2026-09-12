@@ -230,8 +230,12 @@ document.addEventListener('DOMContentLoaded', () => {
     playTone(587.33, 'sine', 0.2);
     showToast('Account Connected', `Linked with ${email}. Proceeding to break time.`);
 
-    // Automatically transition to Stage 2
-    setTimeout(() => goToStage(2), 600);
+    // Sync with server to resume state or go to stage 2
+    syncFromServer().then(handled => {
+      if (!handled) {
+        setTimeout(() => goToStage(2), 600);
+      }
+    });
   });
 
   btnProceedToBreak?.addEventListener('click', () => {
@@ -240,17 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const savedEmail = localStorage.getItem('fl_connected_email');
   if (savedEmail) {
-    state.isConnected = true;
-    state.connectedEmail = savedEmail;
-    accountUnconnectedBox.style.display = 'none';
-    accountConnectedBox.style.display = 'flex';
-    accountNameText.textContent = `Google Account: ${savedEmail}`;
-    accountAvatarChar.textContent = savedEmail.charAt(0).toUpperCase();
-
-    const ytAccountEmailLabel = document.getElementById('yt-account-email-label');
-    const ytAccountAvatarChar = document.getElementById('yt-account-avatar-char');
-    if (ytAccountEmailLabel) ytAccountEmailLabel.textContent = `Google Account: ${savedEmail}`;
-    if (ytAccountAvatarChar) ytAccountAvatarChar.textContent = savedEmail.charAt(0).toUpperCase();
+    connectEmailInput.value = savedEmail;
   }
 
 
