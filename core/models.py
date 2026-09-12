@@ -30,6 +30,7 @@ class FocusState(models.Model):
     def get_for_email(cls, email):
         if not email:
             email = 'student@gmail.com'
+        email = email.lower().strip()
         state, created = cls.objects.get_or_create(email=email)
         if created:
             state.mode = 'IDLE'

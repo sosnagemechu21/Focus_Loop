@@ -211,7 +211,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   btnConfirmConnect?.addEventListener('click', async () => {
-    const email = connectEmailInput.value.trim() || 'student@gmail.com';
+    let email = connectEmailInput.value.trim() || 'student@gmail.com';
+    email = email.toLowerCase();
     state.isConnected = true;
     state.connectedEmail = email;
     localStorage.setItem('fl_connected_email', email);
