@@ -211,6 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const email = connectEmailInput.value.trim() || 'student@gmail.com';
     state.isConnected = true;
     state.connectedEmail = email;
+    localStorage.setItem('fl_connected_email', email);
 
     accountUnconnectedBox.style.display = 'none';
     accountConnectedBox.style.display = 'flex';
@@ -233,6 +234,21 @@ document.addEventListener('DOMContentLoaded', () => {
   btnProceedToBreak?.addEventListener('click', () => {
     goToStage(2);
   });
+
+  const savedEmail = localStorage.getItem('fl_connected_email');
+  if (savedEmail) {
+    state.isConnected = true;
+    state.connectedEmail = savedEmail;
+    accountUnconnectedBox.style.display = 'none';
+    accountConnectedBox.style.display = 'flex';
+    accountNameText.textContent = `Google Account: ${savedEmail}`;
+    accountAvatarChar.textContent = savedEmail.charAt(0).toUpperCase();
+
+    const ytAccountEmailLabel = document.getElementById('yt-account-email-label');
+    const ytAccountAvatarChar = document.getElementById('yt-account-avatar-char');
+    if (ytAccountEmailLabel) ytAccountEmailLabel.textContent = `Google Account: ${savedEmail}`;
+    if (ytAccountAvatarChar) ytAccountAvatarChar.textContent = savedEmail.charAt(0).toUpperCase();
+  }
 
 
 
@@ -1271,7 +1287,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch('/api/channels/add/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ input: raw, max_videos: 40 })
+        body: JSON.stringify({ input: raw, max_videos: 40, email: state.connectedEmail })
       });
       const data = await res.json();
 
@@ -1309,7 +1325,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function triggerSurpriseVideo() {
     try {
-      const res = await fetch('/api/videos/?surprise=true');
+      const res = await fetch(`/api/videos/?surprise=true&email=${encodeURIComponent(state.connectedEmail)}`);
       const data = await res.json();
       if (data.video) {
         playVideoInline(data.video);
@@ -1368,7 +1384,8 @@ document.addEventListener('DOMContentLoaded', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           duration_minutes: durationMinutes,
-          task_name: task
+          task_name: task,
+          email: state.connectedEmail
         })
       });
 
@@ -1403,7 +1420,8 @@ document.addEventListener('DOMContentLoaded', () => {
         event_type: 'YOUTUBE_ATTEMPT_FOCUS',
         app_name: 'YouTube',
         target_url: 'https://youtube.com',
-        note: 'Attempted to open YouTube during locked study block.'
+        note: 'Attempted to open YouTube during locked study block.',
+        email: state.connectedEmail
       })
     });
     window.open('/blocked/?app=YouTube&reason=focus_locked', '_blank');
@@ -1412,7 +1430,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   btnEndStudyLock?.addEventListener('click', async () => {
     try {
-      await fetch('/api/focus/end/', { method: 'POST' });
+      await fetch('/api/focus/end/', { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: state.connectedEmail })
+      });
       showToast('Study Session Concluded', 'Great job honoring your boundary!');
       refreshAnalytics();
       goToStage(1);
@@ -1543,8 +1565,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Server State Sync (Timer Persistence)
   // ========================================================
   async function syncFromServer() {
+    if (!state.connectedEmail) return false;
     try {
-      const res = await fetch('/api/status/');
+      const res = await fetch(`/api/status/?email=${encodeURIComponent(state.connectedEmail)}`);
       const data = await res.json();
 
       const serverMode = data.mode;           // 'FOCUS', 'BREAK', or 'IDLE'
@@ -1559,7 +1582,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isExpired) {
           // Break ended while app was closed → auto-transition to ask study
           try {
-            await fetch('/api/break/end/', { method: 'POST' });
+            await fetch('/api/break/end/', { 
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: state.connectedEmail })
+            });
           } catch (e) { /* ignore */ }
           showToast('Break Ended', 'Your break finished while the app was closed. Choose study time.');
           goToStage(4);
@@ -1581,7 +1608,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isExpired) {
           // Focus/study ended while app was closed → end session, go to Stage 2
           try {
-            await fetch('/api/focus/end/', { method: 'POST' });
+            await fetch('/api/focus/end/', { 
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: state.connectedEmail })
+            });
           } catch (e) { /* ignore */ }
           showToast('Study Complete', 'Your study session finished while the app was closed. Great job!');
           goToStage(2);
@@ -1619,9 +1650,13 @@ document.addEventListener('DOMContentLoaded', () => {
   startTicker();
 
   // Sync state from server first, then fall back to starting at Stage 1
-  syncFromServer().then(handled => {
-    if (!handled) {
-      goToStage(1);
-    }
-  });
+  if (state.isConnected && state.connectedEmail) {
+    syncFromServer().then(handled => {
+      if (!handled) {
+        goToStage(2);
+      }
+    });
+  } else {
+    goToStage(1);
+  }
 });

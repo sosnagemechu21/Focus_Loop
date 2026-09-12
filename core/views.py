@@ -14,8 +14,7 @@ from .youtube_service import YouTubeService
 
 def index_view(request):
     """Main dashboard & phone simulator"""
-    state = FocusState.get_current()
-    return render(request, 'index.html', {'state': state})
+    return render(request, 'index.html')
 
 
 def blocked_view(request):
@@ -27,7 +26,8 @@ def blocked_view(request):
 
 def api_status(request):
     """Current state of focus/break, timers, and today's summary"""
-    state = FocusState.get_current()
+    email = request.GET.get('email')
+    state = FocusState.get_for_email(email)
     now = timezone.now()
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
@@ -155,9 +155,10 @@ def api_focus_start(request):
     duration = int(data.get('duration_minutes', 50))
     break_duration = int(data.get('break_minutes', 15))
     task = data.get('task_name', 'Study / Deep Work')
+    email = data.get('email')
     request.session['break_minutes'] = break_duration
 
-    state = FocusState.get_current()
+    state = FocusState.get_for_email(email)
 
     # Close previous session if was running
     if state.mode == 'BREAK':
@@ -178,7 +179,9 @@ def api_focus_start(request):
 @csrf_exempt
 def api_focus_end(request):
     """Complete current focus session"""
-    state = FocusState.get_current()
+    data = json.loads(request.body) if request.body else {}
+    email = data.get('email')
+    state = FocusState.get_for_email(email)
     if state.mode == 'FOCUS':
         elapsed_mins = max(1.0, round(state.elapsed_seconds / 60.0, 1))
         SessionHistory.objects.create(
@@ -203,8 +206,9 @@ def api_break_start(request):
     duration = int(data.get('duration_minutes', 20))
     video_id = data.get('video_id', '')
     video_title = data.get('video_title', '')
+    email = data.get('email')
 
-    state = FocusState.get_current()
+    state = FocusState.get_for_email(email)
 
     # Record any active focus session completion
     if state.mode == 'FOCUS':
@@ -270,8 +274,10 @@ def _close_break_session(state):
 
 @csrf_exempt
 def api_break_end(request):
-    """End break mode -> immediately locks YouTube and returns to Focus"""
-    state = FocusState.get_current()
+    """End a break session and return to idle"""
+    data = json.loads(request.body) if request.body else {}
+    email = data.get('email')
+    state = FocusState.get_for_email(email)
     actual_mins = 0
     overrun = False
 
@@ -298,8 +304,10 @@ def api_break_end(request):
 
 @csrf_exempt
 def api_log_event(request):
-    """Record boundary friction events (e.g. YouTube attempted during focus, Shorts blocked)"""
+    """Log events from the frontend or extension"""
     data = json.loads(request.body) if request.body else {}
+    email = data.get('email')
+    
     event_type = data.get('event_type', 'YOUTUBE_ATTEMPT_FOCUS')
     app_name = data.get('app_name', 'YouTube')
     target_url = data.get('target_url', '')

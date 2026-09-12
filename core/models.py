@@ -11,6 +11,7 @@ class FocusState(models.Model):
         ('IDLE', 'Idle ⏸️'),
     ]
 
+    email = models.EmailField(unique=True, default='student@gmail.com')
     mode = models.CharField(max_length=20, choices=MODE_CHOICES, default='IDLE')
     session_id = models.CharField(max_length=64, default=uuid.uuid4)
     task_name = models.CharField(max_length=120, default="Deep Work / Study")
@@ -26,12 +27,14 @@ class FocusState(models.Model):
         verbose_name_plural = "Focus State"
 
     @classmethod
-    def get_current(cls):
-        state, created = cls.objects.get_or_create(id=1)
+    def get_for_email(cls, email):
+        if not email:
+            email = 'student@gmail.com'
+        state, created = cls.objects.get_or_create(email=email)
         if created:
+            state.mode = 'IDLE'
             state.start_time = timezone.now()
             state.planned_duration_minutes = 90
-            state.next_break_time = timezone.now() + timedelta(minutes=90)
             state.save()
         return state
 
